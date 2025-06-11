@@ -1,0 +1,517 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Scrollbar */
+* {
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--primary-300) / 0.6);
+  border-radius: 4px;
+  border: 1px solid rgb(var(--primary-200) / 0.3);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--primary-400) / 0.8);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dark mode scrollbar adjustments */
+.dark *::-webkit-scrollbar-thumb {
+  background: rgb(var(--primary-600) / 0.7);
+  border: 1px solid rgb(var(--primary-700) / 0.5);
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--primary-500) / 0.9);
+}
+
+/* Theme: Sunset (Default) */
+.theme-default {
+  --primary-50: 255 247 237;
+  --primary-100: 255 237 213;
+  --primary-200: 254 215 170;
+  --primary-300: 253 186 116;
+  --primary-400: 251 146 60;
+  --primary-500: 249 115 22;
+  --primary-600: 234 88 12;
+  --primary-700: 194 65 12;
+  --primary-800: 154 52 18;
+  --primary-900: 124 45 18;
+  --primary-950: 67 20 7;
+
+  --secondary-50: 253 242 248;
+  --secondary-100: 252 231 243;
+  --secondary-200: 251 207 232;
+  --secondary-300: 249 168 212;
+  --secondary-400: 244 114 182;
+  --secondary-500: 236 72 153;
+  --secondary-600: 219 39 119;
+  --secondary-700: 190 24 93;
+  --secondary-800: 157 23 77;
+  --secondary-900: 131 24 67;
+  --secondary-950: 80 7 36;
+
+  /* Theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(255, 252, 248),
+    rgb(254, 250, 252),
+    rgb(255, 254, 250)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(255, 237, 213),
+    rgb(252, 231, 243),
+    rgb(255, 247, 237)
+  );
+
+  /* Theme-specific background variations */
+  --bg-primary: 255 247 237;
+  --bg-secondary: 255 237 213;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 254 252 249;
+  --bg-surface-active: 254 215 170;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 254 252 249;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 254 252 249;
+  --bg-selected: 255 237 213;
+  --bg-selected-hover: 254 215 170;
+}
+
+.dark.theme-default {
+  /* Dark theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(20, 15, 12),
+    rgb(25, 18, 15),
+    rgb(22, 16, 13)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(30, 20, 15),
+    rgb(40, 25, 20),
+    rgb(35, 22, 18)
+  );
+
+  --bg-primary: 30 20 15;
+  --bg-secondary: 40 25 20;
+  --bg-surface: 45 35 30;
+  --bg-surface-hover: 55 45 40;
+  --bg-surface-active: 65 45 35;
+  --bg-input: 45 35 30;
+  --bg-input-hover: 55 45 40;
+  --bg-modal: 45 35 30;
+  --bg-dropdown: 45 35 30;
+  --bg-card: 45 35 30;
+  --bg-card-hover: 55 45 40;
+  --bg-selected: 65 45 35;
+  --bg-selected-hover: 75 55 45;
+}
+
+/* Theme: Ocean / Deep */
+.theme-deep {
+  --primary-50: 240 249 255;
+  --primary-100: 224 242 254;
+  --primary-200: 186 230 253;
+  --primary-300: 125 211 252;
+  --primary-400: 56 189 248;
+  --primary-500: 14 165 233;
+  --primary-600: 2 132 199;
+  --primary-700: 3 105 161;
+  --primary-800: 7 89 133;
+  --primary-900: 12 74 110;
+  --primary-950: 8 47 73;
+
+  --secondary-50: 239 246 255;
+  --secondary-100: 219 234 254;
+  --secondary-200: 191 219 254;
+  --secondary-300: 147 197 253;
+  --secondary-400: 96 165 250;
+  --secondary-500: 59 130 246;
+  --secondary-600: 37 99 235;
+  --secondary-700: 29 78 216;
+  --secondary-800: 30 64 175;
+  --secondary-900: 30 58 138;
+  --secondary-950: 23 37 84;
+
+  /* Theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(248, 252, 255),
+    rgb(245, 250, 255),
+    rgb(250, 254, 255)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(224, 242, 254),
+    rgb(219, 234, 254),
+    rgb(240, 249, 255)
+  );
+
+  /* Theme-specific background variations */
+  --bg-primary: 240 249 255;
+  --bg-secondary: 224 242 254;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 248 250 252;
+  --bg-surface-active: 186 230 253;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 248 250 252;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 248 250 252;
+  --bg-selected: 224 242 254;
+  --bg-selected-hover: 186 230 253;
+}
+
+.dark.theme-deep {
+  /* Dark theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(10, 18, 25),
+    rgb(12, 20, 30),
+    rgb(11, 19, 27)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(15, 25, 35),
+    rgb(20, 30, 45),
+    rgb(18, 28, 40)
+  );
+
+  --bg-primary: 15 25 35;
+  --bg-secondary: 20 30 45;
+  --bg-surface: 25 35 50;
+  --bg-surface-hover: 35 45 60;
+  --bg-surface-active: 30 50 70;
+  --bg-input: 25 35 50;
+  --bg-input-hover: 35 45 60;
+  --bg-modal: 25 35 50;
+  --bg-dropdown: 25 35 50;
+  --bg-card: 25 35 50;
+  --bg-card-hover: 35 45 60;
+  --bg-selected: 30 50 70;
+  --bg-selected-hover: 40 60 80;
+}
+
+/* Theme: Wind / Forest */
+.theme-wind {
+  --primary-50: 236 253 245;
+  --primary-100: 209 250 229;
+  --primary-200: 167 243 208;
+  --primary-300: 110 231 183;
+  --primary-400: 52 211 153;
+  --primary-500: 16 185 129;
+  --primary-600: 5 150 105;
+  --primary-700: 4 120 87;
+  --primary-800: 6 95 70;
+  --primary-900: 6 78 59;
+  --primary-950: 2 44 34;
+
+  --secondary-50: 240 253 244;
+  --secondary-100: 220 252 231;
+  --secondary-200: 187 247 208;
+  --secondary-300: 134 239 172;
+  --secondary-400: 74 222 128;
+  --secondary-500: 34 197 94;
+  --secondary-600: 22 163 74;
+  --secondary-700: 21 128 61;
+  --secondary-800: 22 101 52;
+  --secondary-900: 20 83 45;
+  --secondary-950: 5 46 22;
+
+  /* Theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(250, 255, 252),
+    rgb(248, 254, 250),
+    rgb(252, 255, 253)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(209, 250, 229),
+    rgb(220, 252, 231),
+    rgb(236, 253, 245)
+  );
+
+  /* Theme-specific background variations */
+  --bg-primary: 236 253 245;
+  --bg-secondary: 209 250 229;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 249 251 249;
+  --bg-surface-active: 167 243 208;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 249 251 249;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 249 251 249;
+  --bg-selected: 209 250 229;
+  --bg-selected-hover: 167 243 208;
+}
+
+.dark.theme-wind {
+  /* Dark theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(10, 18, 15),
+    rgb(12, 22, 18),
+    rgb(11, 20, 16)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(15, 25, 20),
+    rgb(20, 35, 25),
+    rgb(18, 30, 22)
+  );
+
+  --bg-primary: 15 25 20;
+  --bg-secondary: 20 35 25;
+  --bg-surface: 25 40 30;
+  --bg-surface-hover: 35 50 40;
+  --bg-surface-active: 30 55 40;
+  --bg-input: 25 40 30;
+  --bg-input-hover: 35 50 40;
+  --bg-modal: 25 40 30;
+  --bg-dropdown: 25 40 30;
+  --bg-card: 25 40 30;
+  --bg-card-hover: 35 50 40;
+  --bg-selected: 30 55 40;
+  --bg-selected-hover: 40 65 50;
+}
+
+/* Theme: Sweet / Candy */
+.theme-candy {
+  --primary-50: 253 242 248;
+  --primary-100: 252 231 243;
+  --primary-200: 251 207 232;
+  --primary-300: 249 168 212;
+  --primary-400: 244 114 182;
+  --primary-500: 236 72 153;
+  --primary-600: 219 39 119;
+  --primary-700: 190 24 93;
+  --primary-800: 157 23 77;
+  --primary-900: 131 24 67;
+  --primary-950: 80 7 36;
+
+  --secondary-50: 252 231 243;
+  --secondary-100: 250 209 232;
+  --secondary-200: 247 162 201;
+  --secondary-300: 244 114 182;
+  --secondary-400: 236 72 153;
+  --secondary-500: 219 39 119;
+  --secondary-600: 190 24 93;
+  --secondary-700: 157 23 77;
+  --secondary-800: 131 24 67;
+  --secondary-900: 112 26 59;
+  --secondary-950: 80 7 36;
+
+  /* Theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(255, 252, 254),
+    rgb(254, 250, 253),
+    rgb(255, 253, 254)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(252, 231, 243),
+    rgb(250, 209, 232),
+    rgb(253, 242, 248)
+  );
+
+  /* Theme-specific background variations */
+  --bg-primary: 253 242 248;
+  --bg-secondary: 252 231 243;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 254 251 253;
+  --bg-surface-active: 251 207 232;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 254 251 253;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 254 251 253;
+  --bg-selected: 252 231 243;
+  --bg-selected-hover: 251 207 232;
+}
+
+.dark.theme-candy {
+  /* Dark theme gradient - SOFT background with pink undertones */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(25, 15, 20),
+    rgb(30, 18, 25),
+    rgb(27, 16, 22)
+  );
+
+  /* Chat container - STRONGER color (previous background) with pink gradients */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(40, 20, 30),
+    rgb(50, 25, 40),
+    rgb(45, 22, 35)
+  );
+
+  --bg-primary: 40 20 30;
+  --bg-secondary: 50 25 40;
+  --bg-surface: 55 30 45;
+  --bg-surface-hover: 65 40 55;
+  --bg-surface-active: 70 35 55;
+  --bg-input: 55 30 45;
+  --bg-input-hover: 65 40 55;
+  --bg-modal: 55 30 45;
+  --bg-dropdown: 55 30 45;
+  --bg-card: 55 30 45;
+  --bg-card-hover: 65 40 55;
+  --bg-selected: 70 35 55;
+  --bg-selected-hover: 80 45 65;
+}
+
+/* Theme: Shad / Monochrome */
+.theme-shad {
+  --primary-50: 249 250 251;
+  --primary-100: 243 244 246;
+  --primary-200: 229 231 235;
+  --primary-300: 209 213 219;
+  --primary-400: 156 163 175;
+  --primary-500: 107 114 128;
+  --primary-600: 75 85 99;
+  --primary-700: 55 65 81;
+  --primary-800: 31 41 55;
+  --primary-900: 17 24 39;
+  --primary-950: 3 7 18;
+
+  --secondary-50: 248 250 252;
+  --secondary-100: 241 245 249;
+  --secondary-200: 226 232 240;
+  --secondary-300: 203 213 225;
+  --secondary-400: 148 163 184;
+  --secondary-500: 100 116 139;
+  --secondary-600: 71 85 105;
+  --secondary-700: 51 65 85;
+  --secondary-800: 30 41 59;
+  --secondary-900: 15 23 42;
+  --secondary-950: 2 6 23;
+
+  /* Theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(253, 254, 255),
+    rgb(251, 252, 253),
+    rgb(254, 255, 255)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(249, 250, 251),
+    rgb(243, 244, 246),
+    rgb(248, 250, 252)
+  );
+
+  /* Theme-specific background variations */
+  --bg-primary: 249 250 251;
+  --bg-secondary: 243 244 246;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 249 250 251;
+  --bg-surface-active: 229 231 235;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 249 250 251;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 249 250 251;
+  --bg-selected: 243 244 246;
+  --bg-selected-hover: 229 231 235;
+}
+
+/* Dark mode adjustments for Shad theme */
+.dark.theme-shad {
+  --primary-50: 3 7 18;
+  --primary-100: 17 24 39;
+  --primary-200: 31 41 55;
+  --primary-300: 55 65 81;
+  --primary-400: 75 85 99;
+  --primary-500: 107 114 128;
+  --primary-600: 156 163 175;
+  --primary-700: 209 213 219;
+  --primary-800: 229 231 235;
+  --primary-900: 243 244 246;
+  --primary-950: 249 250 251;
+
+  --secondary-50: 2 6 23;
+  --secondary-100: 15 23 42;
+  --secondary-200: 30 41 59;
+  --secondary-300: 51 65 85;
+  --secondary-400: 71 85 105;
+  --secondary-500: 100 116 139;
+  --secondary-600: 148 163 184;
+  --secondary-700: 203 213 225;
+  --secondary-800: 226 232 240;
+  --secondary-900: 241 245 249;
+  --secondary-950: 248 250 252;
+
+  /* Dark theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(8, 12, 16),
+    rgb(12, 16, 22),
+    rgb(10, 14, 19)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(15, 18, 22),
+    rgb(25, 30, 38),
+    rgb(20, 24, 30)
+  );
+
+  /* Dark mode background variations */
+  --bg-primary: 15 18 22;
+  --bg-secondary: 25 30 38;
+  --bg-surface: 30 35 45;
+  --bg-surface-hover: 40 45 55;
+  --bg-surface-active: 45 50 60;
+  --bg-input: 30 35 45;
+  --bg-input-hover: 40 45 55;
+  --bg-modal: 30 35 45;
+  --bg-dropdown: 30 35 45;
+  --bg-card: 30 35 45;
+  --bg-card-hover: 40 45 55;
+  --bg-selected: 45 50 60;
+  --bg-selected-hover: 55 60 70;
+}
