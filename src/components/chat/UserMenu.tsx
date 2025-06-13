@@ -2,7 +2,7 @@ import { LogOut, Moon, Settings, Sun, UserIcon } from "lucide-react";
 import React, { useState } from "react";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useThemeStore } from "@/stores/theme-store";
+import { useTheme } from "@/hooks/useTheme";
 import { Button } from "../ui/Button";
 
 interface UserMenuProps {
@@ -11,7 +11,7 @@ interface UserMenuProps {
 
 export const UserMenu: React.FC<UserMenuProps> = ({ onOpenSettings }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { baseTheme, toggleBaseTheme } = useThemeStore();
+  const { baseTheme, toggleBaseTheme } = useTheme();
   const { user, logout } = useAuth();
 
   const handleLogout = () => {

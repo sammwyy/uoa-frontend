@@ -33,6 +33,7 @@ export const Textarea: React.FC<TextareaProps> = ({
 
   useEffect(() => {
     adjustHeight();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, autoResize]);
 
   const baseClasses =

@@ -39,7 +39,7 @@ interface ModelSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
   models: AIModel[];
-  selectedModel: AIModel | null;
+  selectedModel: AIModel | null | undefined;
   onSelectModel: (model: AIModel) => void;
   onConfigureModel: (model: AIModel) => void;
 }
@@ -401,7 +401,7 @@ export const ModelSelectorModal: React.FC<ModelSelectorModalProps> = ({
             </div>
 
             {/* Models list/grid */}
-            <div className="overflow-y-auto max-h-[calc(70vh-120px)]">
+            <div className="overflow-y-auto p-5 max-h-[calc(70vh-120px)]">
               {filteredAndSortedModels.length === 0 ? (
                 <div className="text-center py-12">
                   <Bot className="w-16 h-16 text-gray-400 mx-auto mb-4" />

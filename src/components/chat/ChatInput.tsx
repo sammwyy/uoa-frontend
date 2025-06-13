@@ -1,14 +1,18 @@
 import { Mic, Paperclip, PenTool, Send } from "lucide-react";
 import React, { useState } from "react";
 
+import { ToolState } from "@/hooks/useTools";
 import { Button } from "../ui/Button";
 import { Textarea } from "../ui/TextArea";
+import { ToolsBar } from "./ToolsBar";
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
   isLoading: boolean;
   disabled?: boolean;
   placeholder?: string;
+  toggleTool?: (toolId: string) => void;
+  toolStates?: ToolState[];
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -16,6 +20,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isLoading,
   disabled,
   placeholder,
+  toggleTool,
+  toolStates,
 }) => {
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
@@ -77,13 +83,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="relative">
-          <div className="flex items-end gap-2 sm:gap-3 p-3 sm:p-4 bg-theme-bg-input/90 backdrop-blur-md rounded-2xl border border-gray-200/30 dark:border-gray-700/30 shadow-lg">
+        <form
+          onSubmit={handleSubmit}
+          className="relative flex flex-col gap-2 bg-theme-bg-input/90 backdrop-blur-md rounded-2xl border border-gray-200/30 dark:border-gray-700/30 shadow-lg sm:px-4 py-1 sm:py-2"
+        >
+          <div className="flex items-end justify-center gap-2 sm:gap-3 px-3">
             {/* Action buttons - Hidden on mobile to save space */}
             <div className="hidden sm:flex align-center gap-2">
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 icon={Paperclip}
                 type="button"
                 className="p-2.5"
@@ -91,7 +100,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               />
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 icon={Mic}
                 type="button"
                 className="p-2.5"
@@ -99,7 +108,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               />
               <Button
                 variant="ghost"
-                size="sm"
+                size="md"
                 icon={PenTool}
                 type="button"
                 className="p-2.5"
@@ -118,14 +127,14 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 placeholder={placeholder}
                 disabled={isLoading || disabled}
                 rows={1}
-                className="min-h-[24px] max-h-[240px] leading-6 text-sm sm:text-base"
+                className="min-h-[24px] max-h-[240px] leading-6"
               />
             </div>
 
             {/* Send button */}
             <Button
               variant="primary"
-              size="sm"
+              size="md"
               icon={Send}
               type="submit"
               disabled={!message.trim() || isLoading || disabled}
@@ -133,6 +142,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               title="Send message"
             />
           </div>
+
+          {/* Tool selection badges */}
+          {toolStates && toggleTool && toolStates.length > 0 && (
+            <ToolsBar toolStates={toolStates} toggleTool={toggleTool} />
+          )}
         </form>
       </div>
     </div>

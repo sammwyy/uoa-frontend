@@ -1,17 +1,16 @@
 import React, { useEffect } from "react";
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { BrowserRouter as Router } from "react-router-dom";
 
 import { ApolloProvider } from "@apollo/client";
 import { LoadingScreen } from "./components/layout/LoadingScreen";
-import { ProtectedRoute } from "./components/layout/ProtectedRoute";
+import { ThemeProvider } from "./contexts/ThemeProvider";
 import { useAuth } from "./hooks/useAuth";
 import { apolloClient } from "./lib/apollo/apollo-client";
 import { logger } from "./lib/logger";
 import { indexedDB } from "./lib/storage/indexed-db";
+import { AppRouter } from "./router";
 import { useAuthStore } from "./stores/auth-store";
 import { useConnectionStore } from "./stores/connection-store";
-import { AppView } from "./views/AppView";
-import { AuthView } from "./views/AuthView";
 
 // Main app content that shows loading screens
 const AppContent: React.FC = () => {
@@ -27,22 +26,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  return (
-    <Routes>
-      {/* Auth route - only for authentication */}
-      <Route path="/auth" element={<AuthView />} />
-
-      {/* All other routes go to AppView - it handles everything internally */}
-      <Route
-        path="/*"
-        element={
-          <ProtectedRoute>
-            <AppView />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
-  );
+  return <AppRouter />;
 };
 
 function App() {
@@ -102,9 +86,11 @@ function App() {
 
   return (
     <ApolloProvider client={apolloClient}>
-      <Router>
-        <AppContent />
-      </Router>
+      <ThemeProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </ThemeProvider>
     </ApolloProvider>
   );
 }

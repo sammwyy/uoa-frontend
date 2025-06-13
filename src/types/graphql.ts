@@ -25,6 +25,8 @@ export interface Chat {
   lastActivityAt: string;
   pinned: boolean;
   title: string;
+  modelId?: string;
+  apiKeyId?: string;
 }
 
 export interface ChatBranch {
@@ -177,6 +179,8 @@ export interface UpdateChatDto {
   archived?: boolean;
   pinned?: boolean;
   isPublic?: boolean;
+  modelId?: string;
+  apiKeyId?: string;
 }
 
 export interface CreateBranchDto {

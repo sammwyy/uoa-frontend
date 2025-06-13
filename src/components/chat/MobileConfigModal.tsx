@@ -2,7 +2,6 @@ import { Bot, Check, Settings, Wrench, X } from "lucide-react";
 import React, { useState } from "react";
 
 import { useTools } from "@/hooks/useTools";
-import { useToolsStore } from "@/stores/tools-store";
 import { AIModel } from "@/types/graphql";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
@@ -13,7 +12,7 @@ interface MobileConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
   models: AIModel[];
-  selectedModel: AIModel | null;
+  selectedModel: AIModel | null | undefined;
   onSelectModel: (model: AIModel) => void;
 }
 
@@ -25,8 +24,7 @@ export const MobileConfigModal: React.FC<MobileConfigModalProps> = ({
   onSelectModel,
 }) => {
   const [activeTab, setActiveTab] = useState<"model" | "tools">("model");
-  const { toggleTool } = useToolsStore();
-  const toolStates = useTools();
+  const { toggleTool, toolStates } = useTools();
   const activeTools = toolStates.filter((t) => t.isEnabled);
 
   const handleModelSelect = (model: AIModel) => {

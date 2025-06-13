@@ -1,0 +1,208 @@
+import { Moon, Sun } from "lucide-react";
+
+import { Card } from "@/components/ui/Card";
+import { Switch } from "@/components/ui/Switch";
+import { useTheme } from "@/hooks/useTheme";
+
+interface ThemeOption {
+  id: "default" | "deep" | "wind" | "candy" | "shad";
+  name: string;
+  description: string;
+  colors: {
+    light: string;
+    dark: string;
+  };
+}
+
+const themeOptions: ThemeOption[] = [
+  {
+    id: "default",
+    name: "Sunset",
+    description: "Warm orange to pink gradient",
+    colors: {
+      light: "linear-gradient(135deg, #f97316, #ec4899)",
+      dark: "linear-gradient(135deg, #ea580c, #db2777)",
+    },
+  },
+  {
+    id: "deep",
+    name: "Ocean",
+    description: "Deep blue marine tones",
+    colors: {
+      light: "linear-gradient(135deg, #0ea5e9, #3b82f6)",
+      dark: "linear-gradient(135deg, #0284c7, #2563eb)",
+    },
+  },
+  {
+    id: "wind",
+    name: "Forest",
+    description: "Soft green nature vibes",
+    colors: {
+      light: "linear-gradient(135deg, #10b981, #059669)",
+      dark: "linear-gradient(135deg, #059669, #047857)",
+    },
+  },
+  {
+    id: "candy",
+    name: "Candy",
+    description: "Sweet pink pastels",
+    colors: {
+      light: "linear-gradient(135deg, #f472b6, #ec4899)",
+      dark: "linear-gradient(135deg, #ec4899, #db2777)",
+    },
+  },
+  {
+    id: "shad",
+    name: "Monochrome",
+    description: "Pure black and white",
+    colors: {
+      light: "linear-gradient(135deg, #374151, #111827)",
+      dark: "linear-gradient(135deg, #f9fafb, #e5e7eb)",
+    },
+  },
+];
+
+export function AppearanceTab() {
+  const { baseTheme, toggleBaseTheme, setAccentTheme, accentTheme } =
+    useTheme();
+
+  return (
+    <div className="space-y-6">
+      {/* Theme Mode */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          Theme Mode
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Card
+            variant={baseTheme === "light" ? "glass" : "default"}
+            padding="md"
+            onClick={() => baseTheme === "dark" && toggleBaseTheme()}
+            className={`cursor-pointer transition-all duration-200 ${
+              baseTheme === "light"
+                ? "bg-primary-100/60 dark:bg-primary-900/40 border-primary-200/50 dark:border-primary-700/50"
+                : "hover:scale-[1.02]"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-orange-200 to-pink-200 flex items-center justify-center">
+                <Sun className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
+              </div>
+              <div>
+                <div className="font-medium text-gray-800 dark:text-gray-200 text-sm sm:text-base">
+                  Light Mode
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  Bright and clean
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card
+            variant={baseTheme === "dark" ? "glass" : "default"}
+            padding="md"
+            onClick={() => baseTheme === "light" && toggleBaseTheme()}
+            className={`cursor-pointer transition-all duration-200 ${
+              baseTheme === "dark"
+                ? "bg-primary-100/60 dark:bg-primary-900/40 border-primary-200/50 dark:border-primary-700/50"
+                : "hover:scale-[1.02]"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                <Moon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" />
+              </div>
+              <div>
+                <div className="font-medium text-gray-800 dark:text-gray-200 text-sm sm:text-base">
+                  Dark Mode
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                  Easy on the eyes
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Color Themes */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          Color Theme
+        </h3>
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
+          {themeOptions.map((theme) => (
+            <Card
+              key={theme.id}
+              variant={accentTheme === theme.id ? "glass" : "default"}
+              padding="md"
+              onClick={() => setAccentTheme(theme.id)}
+              className={`cursor-pointer group transition-all duration-200 ${
+                accentTheme === theme.id
+                  ? "bg-primary-100/60 dark:bg-primary-900/40 border-primary-200/50 dark:border-primary-700/50"
+                  : "hover:scale-[1.02]"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg shadow-sm border border-white/30 dark:border-gray-600/30"
+                    style={{ background: theme.colors[baseTheme] }}
+                  />
+                  {accentTheme === theme.id && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-white rounded-full shadow-sm" />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex-1">
+                  <div
+                    className={`font-medium text-sm sm:text-base ${
+                      accentTheme === theme.id
+                        ? "text-primary-700 dark:text-primary-300"
+                        : "text-gray-800 dark:text-gray-200"
+                    }`}
+                  >
+                    {theme.name}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    {theme.description}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Display Settings */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          Display Settings
+        </h3>
+        <div className="space-y-4">
+          <Switch
+            checked={false}
+            onChange={() => {}}
+            label="Compact Mode"
+            description="Reduce spacing and padding throughout the interface"
+          />
+          <Switch
+            checked={true}
+            onChange={() => {}}
+            label="Show Timestamps"
+            description="Display message timestamps in conversations"
+          />
+          <Switch
+            checked={false}
+            onChange={() => {}}
+            label="Smooth Animations"
+            description="Enable smooth transitions and micro-interactions"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}

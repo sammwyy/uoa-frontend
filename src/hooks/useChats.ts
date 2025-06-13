@@ -11,6 +11,7 @@ import {
   GET_CHAT_MESSAGES_QUERY,
   GET_CHAT_QUERY,
   SEND_MESSAGE_MUTATION,
+  UPDATE_CHAT_MUTATION,
 } from "@/lib/apollo/queries";
 import { logger } from "@/lib/logger";
 import { useChatStore } from "@/stores/chat-store";
@@ -19,6 +20,7 @@ import type {
   AddMessageDto,
   GetManyChatsDto,
   GetMessagesDto,
+  UpdateChatDto,
 } from "@/types/graphql";
 
 export const useChats = () => {
@@ -39,10 +41,12 @@ export const useChats = () => {
     setError,
     clearError,
     syncWithOfflineData,
+    updateChat: updateChatData,
   } = useChatStore();
 
   const { isOnline } = useConnectionStore();
 
+  const [updateChatMutation] = useMutation(UPDATE_CHAT_MUTATION);
   const [createChatMutation] = useMutation(CREATE_CHAT_MUTATION);
   const [sendMessageMutation] = useMutation(SEND_MESSAGE_MUTATION);
 
@@ -188,6 +192,35 @@ export const useChats = () => {
     }
   };
 
+  // Update chat
+  const updateChat = async (id: string, updateData: UpdateChatDto) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      logger.info("Updating chat:", id);
+
+      const { data } = await updateChatMutation({
+        variables: { id, payload: updateData },
+      });
+
+      if (data?.updateChat) {
+        const updatedChat = data.updateChat;
+        updateChatData(updatedChat);
+        logger.info("Chat updated successfully:", updatedChat._id);
+        return updatedChat;
+      } else {
+        throw new Error("Failed to update chat: No data returned");
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update chat";
+      setError(errorMessage);
+      logger.error("Failed to update chat:", error);
+      throw error;
+    }
+  };
+
   // Send message
   const sendMessage = async (messageData: AddMessageDto) => {
     try {
@@ -236,5 +269,6 @@ export const useChats = () => {
     sendMessage,
     setCurrentChat,
     clearError,
+    updateChat,
   };
 };

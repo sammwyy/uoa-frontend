@@ -14,7 +14,9 @@ import {
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { AIModel, Chat, ChatBranch } from "../../types/graphql";
+import { useModels } from "@/hooks/useModels";
+import { useSidebarStore } from "@/stores/sidebar-store";
+import { AIModel, Chat, ChatBranch, UpdateChatDto } from "../../types/graphql";
 import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
 import { Input } from "../ui/Input";
@@ -24,18 +26,14 @@ import { ModelSelector } from "./ModelSelector";
 import { UserMenu } from "./UserMenu";
 
 interface ChatHeaderProps {
-  chat: Chat | null;
-  models: AIModel[];
-  selectedModel: AIModel | null;
+  chat: Chat;
+  updateChat: (id: string, updateData: UpdateChatDto) => void;
   onSelectModel: (model: AIModel) => void;
-  onUpdateTitle: (chatId: string, newTitle: string) => void;
-  onUpdatePrivacy: (chatId: string, isPrivate: boolean) => void;
   onOpenSettings: () => void;
   hideModelSelector?: boolean;
-  onToggleSidebar?: () => void;
   isAuthenticated?: boolean;
   // Branch-related props
-  branches?: ChatBranch[];
+  branches: ChatBranch[];
   currentBranchId?: string;
   onBranchSelect: (branchId: string) => void;
   onBranchesUpdated: () => void;
@@ -47,16 +45,12 @@ interface ChatHeaderProps {
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   chat,
-  models,
-  selectedModel,
+  updateChat,
+  branches,
   onSelectModel,
-  onUpdateTitle,
-  onUpdatePrivacy,
   onOpenSettings,
   hideModelSelector = false,
-  onToggleSidebar,
   isAuthenticated,
-  branches = [],
   currentBranchId,
   onBranchSelect,
   onBranchesUpdated,
@@ -64,6 +58,10 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onToggleBranches,
   messagesCount = 0,
 }) => {
+  const { models } = useModels();
+  const selectedModel = models.find((m) => m.id === chat?.modelId);
+  const { toggle: toggleSidebar } = useSidebarStore();
+
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -78,7 +76,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const handleSaveEdit = () => {
     if (!chat) return;
     if (editTitle.trim() && editTitle !== chat.title) {
-      onUpdateTitle(chat._id, editTitle.trim());
+      updateChat(chat._id, { title: editTitle.trim() });
     }
     setIsEditing(false);
   };
@@ -113,24 +111,24 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   const handlePrivacyChange = (value: string) => {
     if (!chat || !isAuthenticated) return;
-    onUpdatePrivacy(chat._id, value === "private");
+    updateChat(chat._id, { isPublic: value === "public" });
   };
 
   const currentBranch = branches.find((b) => b._id === currentBranchId);
 
   return (
     <>
-      <div className="backdrop-blur-md border-b border-white/20 dark:border-gray-700/30">
+      <div className="backdrop-blur-md border-b border-white/20 dark:border-gray-700/30 mx-5">
         <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6">
           {/* Left Section - Sidebar Toggle and Model Selector */}
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
             {/* Sidebar Toggle - Only show if authenticated */}
-            {isAuthenticated && onToggleSidebar && (
+            {isAuthenticated && (
               <Button
                 variant="secondary"
                 size="sm"
                 icon={Menu}
-                onClick={onToggleSidebar}
+                onClick={toggleSidebar}
                 className="p-2 flex-shrink-0"
                 title="Toggle sidebar"
               />
@@ -288,7 +286,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           </div>
         )}
       </div>
-
       {/* Mobile Configuration Modal */}
       <MobileConfigModal
         isOpen={mobileConfigOpen}

@@ -1,14 +1,18 @@
 import { Brain, Globe, Puzzle, Wrench } from "lucide-react";
 import React from "react";
 
-import { useTools } from "@/hooks/useTools";
-import { useToolsStore } from "@/stores/tools-store";
+import { ToolState } from "@/hooks/useTools";
 import { Badge } from "../ui/Badge";
 
-export const ToolsBar: React.FC = () => {
-  const { toggleTool } = useToolsStore();
-  const toolStates = useTools();
+export interface ToolsBarProps {
+  toggleTool: (toolId: string) => void;
+  toolStates: ToolState[];
+}
 
+export const ToolsBar: React.FC<ToolsBarProps> = ({
+  toolStates,
+  toggleTool,
+}) => {
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case "Globe":
@@ -25,7 +29,7 @@ export const ToolsBar: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-0">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-4">
       {/* Tool selection badges */}
       <div className="flex flex-wrap gap-1.5 sm:gap-2">
         {toolStates.map(({ tool, isEnabled }) => {

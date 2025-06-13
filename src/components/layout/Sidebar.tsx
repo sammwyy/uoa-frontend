@@ -1,38 +1,50 @@
 import { MessageSquare, Plus, Settings, Trash2 } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 
+import { useChats } from "@/hooks/useChats";
+import { useSidebarStore } from "@/stores/sidebar-store";
 import { Chat } from "@/types";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 
 interface SidebarProps {
-  chats: Chat[];
-  activeChat: Chat | null;
-  onSelectChat: (chat: Chat) => void;
-  onNewChat: () => void;
-  onDeleteChat: (chatId: string) => void;
   onOpenSettings: () => void;
-  isOpen: boolean;
-  onToggle: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  chats,
-  activeChat,
-  onSelectChat,
-  onNewChat,
-  onDeleteChat,
-  onOpenSettings,
-  isOpen,
-  onToggle,
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
+  const params = useParams();
+  const navigate = useNavigate();
+  const { chats, loadChats, isLoading } = useChats();
+  const { isOpen, toggle } = useSidebarStore();
+  const chatId = params.chatId;
+
+  useEffect(() => {
+    if (isOpen && chats.length == 0) {
+      loadChats();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const onSelectChat = (chat: Chat) => {
+    navigate(`/c/${chat._id}`);
+  };
+
+  const onNewChat = () => {
+    navigate("/new");
+  };
+
+  const onDeleteChat = (chatId: string) => {
+    onDeleteChat(chatId);
+  };
+
   return (
     <>
       {/* Mobile overlay */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={onToggle}
+          onClick={toggle}
         />
       )}
 
@@ -79,33 +91,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : (
             <div className="space-y-3">
+              {isLoading && (
+                <div className="text-center text-gray-500 dark:text-gray-400 mt-12">
+                  <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg font-medium">Loading...</p>
+                </div>
+              )}
+
               {chats.map((chat) => (
                 <Card
                   key={chat._id}
-                  variant={activeChat?._id === chat._id ? "glass" : "default"}
-                  padding="md"
+                  variant={chatId === chat._id ? "default" : "glass"}
+                  padding="none"
                   onClick={() => onSelectChat(chat)}
-                  className={`group cursor-pointer ${
-                    activeChat?._id === chat._id
+                  className={`group cursor-pointer py-1 px-3 ${
+                    chatId === chat._id
                       ? "bg-theme-bg-selected border-primary-200/50 dark:border-primary-700/50"
                       : ""
                   }`}
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className={`font-semibold truncate text-sm ${
-                          activeChat?._id === chat._id
-                            ? "text-primary-700 dark:text-primary-300"
-                            : "text-gray-800 dark:text-gray-200"
-                        }`}
-                      >
-                        {chat.title}
-                      </h3>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                        {new Date(chat.lastActivityAt).toLocaleDateString()}
-                      </p>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`font-semibold truncate text-sm ${
+                        chatId === chat._id
+                          ? "text-primary-700 dark:text-primary-300"
+                          : "text-gray-800 dark:text-gray-200"
+                      }`}
+                    >
+                      {chat.title}
+                    </span>
                     <Button
                       variant="ghost"
                       size="sm"

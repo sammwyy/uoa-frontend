@@ -8,7 +8,7 @@ import {
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 import remarkGfm from "remark-gfm";
 
-import { useThemeStore } from "@/stores/theme-store";
+import { useTheme } from "@/hooks/useTheme";
 import { MessageRole } from "@/types";
 import { Button } from "../ui/Button";
 import { ImageModal } from "./ImageModal";
@@ -30,7 +30,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 }) => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const { baseTheme } = useThemeStore();
+  const { baseTheme } = useTheme();
 
   const copyToClipboard = async (text: string, id: string) => {
     try {

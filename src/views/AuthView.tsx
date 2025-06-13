@@ -12,7 +12,7 @@ import React, { useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 import { useAuth } from "@/hooks/useAuth";
-import { useThemeStore } from "@/stores/theme-store";
+import { useTheme } from "@/hooks/useTheme";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { PasswordInput } from "../components/ui/PasswordInput";
@@ -21,7 +21,7 @@ type AuthMode = "login" | "register";
 
 export const AuthView: React.FC = () => {
   const { login, register, isAuthenticated } = useAuth();
-  const { baseTheme, toggleBaseTheme } = useThemeStore();
+  const { baseTheme, toggleBaseTheme } = useTheme();
   const location = useLocation();
 
   const [mode, setMode] = useState<AuthMode>("login");

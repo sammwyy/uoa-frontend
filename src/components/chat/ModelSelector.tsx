@@ -7,7 +7,7 @@ import { ModelSelectorModal } from "./ModelSelectorModal";
 
 interface ModelSelectorProps {
   models: AIModel[];
-  selectedModel: AIModel | null;
+  selectedModel: AIModel | null | undefined;
   onSelectModel: (model: AIModel) => void;
 }
 
