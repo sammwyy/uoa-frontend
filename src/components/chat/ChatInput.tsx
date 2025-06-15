@@ -4,7 +4,10 @@ import React, { useState } from "react";
 import { ToolState } from "@/hooks/useTools";
 import { Button } from "../ui/Button";
 import { Textarea } from "../ui/TextArea";
+import { AudioRecordModal } from "./AudioRecordModal";
+import { DrawingModal } from "./DrawingModal";
 import { ToolsBar } from "./ToolsBar";
+import { ToolsConfig, ToolsConfigModal } from "./ToolsConfigModal";
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
@@ -13,6 +16,9 @@ interface ChatInputProps {
   placeholder?: string;
   toggleTool?: (toolId: string) => void;
   toolStates?: ToolState[];
+  currentModel?: any;
+  onConfigChange?: (config: ToolsConfig) => void;
+  toolsConfig?: ToolsConfig;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -22,9 +28,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   placeholder,
   toggleTool,
   toolStates,
+  currentModel,
+  onConfigChange,
+  toolsConfig,
 }) => {
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [drawingModalOpen, setDrawingModalOpen] = useState(false);
+  const [audioModalOpen, setAudioModalOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +69,28 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
       console.log("Files dropped:", files);
+      // TODO: Handle file uploads
     }
+  };
+
+  const handleConfigChange = (config: ToolsConfig) => {
+    if (onConfigChange) {
+      onConfigChange(config);
+    }
+  };
+
+  const handleDrawingSave = (imageData: string) => {
+    console.log("Drawing saved:", imageData);
+    // TODO: Handle drawing attachment
+    // For now, we'll add a placeholder message
+    setMessage(prev => prev + (prev ? "\n\n" : "") + "[Drawing attached]");
+  };
+
+  const handleAudioSave = (audioBlob: Blob) => {
+    console.log("Audio saved:", audioBlob);
+    // TODO: Handle audio attachment
+    // For now, we'll add a placeholder message
+    setMessage(prev => prev + (prev ? "\n\n" : "") + "[Audio recording attached]");
   };
 
   return (
@@ -103,15 +136,39 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 size="md"
                 icon={Mic}
                 type="button"
+                onClick={() => setAudioModalOpen(true)}
                 className="p-2.5"
-                title="Voice input"
+                title="Record audio"
               />
               <Button
                 variant="ghost"
                 size="md"
                 icon={PenTool}
                 type="button"
+                onClick={() => setDrawingModalOpen(true)}
                 className="p-2.5"
+                title="Draw"
+              />
+            </div>
+
+            {/* Mobile action buttons */}
+            <div className="flex sm:hidden align-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={Mic}
+                type="button"
+                onClick={() => setAudioModalOpen(true)}
+                className="p-2"
+                title="Record audio"
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={PenTool}
+                type="button"
+                onClick={() => setDrawingModalOpen(true)}
+                className="p-2"
                 title="Draw"
               />
             </div>
@@ -145,10 +202,37 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
           {/* Tool selection badges */}
           {toolStates && toggleTool && toolStates.length > 0 && (
-            <ToolsBar toolStates={toolStates} toggleTool={toggleTool} />
+            <ToolsBar 
+              toolStates={toolStates} 
+              toggleTool={toggleTool}
+              onOpenConfig={() => setConfigModalOpen(true)}
+            />
           )}
         </form>
       </div>
+
+      {/* Tools Configuration Modal */}
+      <ToolsConfigModal
+        isOpen={configModalOpen}
+        onClose={() => setConfigModalOpen(false)}
+        currentModel={currentModel}
+        onConfigChange={handleConfigChange}
+        initialConfig={toolsConfig}
+      />
+
+      {/* Drawing Modal */}
+      <DrawingModal
+        isOpen={drawingModalOpen}
+        onClose={() => setDrawingModalOpen(false)}
+        onSave={handleDrawingSave}
+      />
+
+      {/* Audio Recording Modal */}
+      <AudioRecordModal
+        isOpen={audioModalOpen}
+        onClose={() => setAudioModalOpen(false)}
+        onSave={handleAudioSave}
+      />
     </div>
   );
 };

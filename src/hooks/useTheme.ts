@@ -1,7 +1,7 @@
 import { createContext, useContext } from "react";
 
 export type BaseTheme = "light" | "dark";
-export type AccentTheme = "default" | "deep" | "wind" | "candy" | "shad";
+export type AccentTheme = "default" | "deep" | "wind" | "candy" | "shad" | "yellow" | "purple" | "aqua";
 
 interface ThemeContextType {
   baseTheme: BaseTheme;

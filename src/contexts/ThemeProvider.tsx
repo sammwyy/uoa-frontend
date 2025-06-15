@@ -13,7 +13,10 @@ const applyTheme = (baseTheme: BaseTheme, accentTheme: AccentTheme) => {
     "theme-deep",
     "theme-wind",
     "theme-candy",
-    "theme-shad"
+    "theme-shad",
+    "theme-yellow",
+    "theme-purple",
+    "theme-aqua"
   );
 
   // Add current accent theme class

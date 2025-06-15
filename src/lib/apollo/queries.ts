@@ -18,6 +18,16 @@ export const LOGIN_MUTATION = gql`
         emailVerified
         createdAt
         updatedAt
+        preferences {
+          timezone
+          dateFormat
+          language
+          use24HourFormat
+          useMetricUnits
+          showSidebar
+          showTimestamps
+          smoothAnimations
+        }
       }
     }
   }
@@ -36,6 +46,16 @@ export const REGISTER_MUTATION = gql`
         emailVerified
         createdAt
         updatedAt
+        preferences {
+          timezone
+          dateFormat
+          language
+          use24HourFormat
+          useMetricUnits
+          showSidebar
+          showTimestamps
+          smoothAnimations
+        }
       }
     }
   }
@@ -65,6 +85,39 @@ export const UPDATE_PASSWORD_MUTATION = gql`
       emailVerified
       createdAt
       updatedAt
+      preferences {
+        timezone
+        dateFormat
+        language
+        use24HourFormat
+        useMetricUnits
+        showSidebar
+        showTimestamps
+        smoothAnimations
+      }
+    }
+  }
+`;
+
+export const UPDATE_USER_MUTATION = gql`
+  mutation UpdateUser($payload: UpdateUserDto!) {
+    updateUser(payload: $payload) {
+      _id
+      email
+      displayName
+      emailVerified
+      createdAt
+      updatedAt
+      preferences {
+        timezone
+        dateFormat
+        language
+        use24HourFormat
+        useMetricUnits
+        showSidebar
+        showTimestamps
+        smoothAnimations
+      }
     }
   }
 `;
@@ -164,6 +217,7 @@ export const GET_CHAT_MESSAGES_QUERY = gql`
         modelUsed
         tokens
         branchId
+        createdAt
         originalContent {
           type
           text

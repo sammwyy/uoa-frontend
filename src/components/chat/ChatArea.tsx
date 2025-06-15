@@ -2,7 +2,10 @@ import { Bot, Copy, ThumbsDown, ThumbsUp, User } from "lucide-react";
 import React from "react";
 
 import { Message } from "@/types";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { MessageRenderer } from "./MessageRenderer";
+import { TTSButton } from "./TTSButton";
+import { MessageSkeleton } from "../ui/Skeleton";
 
 interface ChatAreaProps {
   messages: Message[];
@@ -10,8 +13,20 @@ interface ChatAreaProps {
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
+  const { preferences } = useUserPreferences();
+
   const copyMessage = (content: string) => {
     navigator.clipboard.writeText(content);
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString(preferences.language, {
+      timeZone: preferences.timezone,
+      hour12: !preferences.use24HourFormat,
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   if (messages.length === 0 && !isLoading) {
@@ -110,6 +125,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
               />
             </div>
 
+            {/* Timestamp */}
+            {preferences.showTimestamps && message.createdAt && (
+              <div className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${
+                message.role === "user" ? "text-right" : "text-left"
+              }`}>
+                {formatTimestamp(message.createdAt)}
+              </div>
+            )}
+
             {message.role === "assistant" && (
               <div className="flex items-center gap-1 sm:gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <button
@@ -119,6 +143,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
                 >
                   <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
+                
+                {/* TTS Button */}
+                <TTSButton 
+                  text={getMessageTextContent(message)}
+                  className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+                />
+                
                 <button
                   className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-green-600 transition-colors"
                   title="Good response"
@@ -144,26 +175,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
       ))}
 
       {isLoading && (
-        <div className="flex gap-2 sm:gap-4 justify-start">
-          <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-            <Bot className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-          </div>
-          <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-gray-200/30 dark:border-gray-700/30 p-3 sm:p-4 rounded-xl shadow-sm">
-            <div className="flex gap-1">
-              <div
-                className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                style={{ animationDelay: "0ms" }}
-              />
-              <div
-                className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                style={{ animationDelay: "150ms" }}
-              />
-              <div
-                className="w-2 h-2 rounded-full bg-gray-400 animate-bounce"
-                style={{ animationDelay: "300ms" }}
-              />
-            </div>
-          </div>
+        <div className="space-y-6">
+          <MessageSkeleton role="assistant" />
+          {Math.random() > 0.5 && <MessageSkeleton role="assistant" />}
         </div>
       )}
     </div>

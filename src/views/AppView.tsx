@@ -1,11 +1,15 @@
 import { ChatView } from "@/components/chat/ChatView";
 import { useParams } from "react-router-dom";
+import { WelcomeView } from "./WelcomeView";
 
 export function AppView() {
   const params = useParams();
   const chatId = params.chatId;
 
-  if (!chatId) <h1>Chat not found</h1>;
+  // If no chatId, show welcome page
+  if (!chatId) {
+    return <WelcomeView />;
+  }
 
-  return <ChatView chatId={chatId!} />;
+  return <ChatView chatId={chatId} />;
 }

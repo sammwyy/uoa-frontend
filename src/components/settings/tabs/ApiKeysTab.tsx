@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Switch } from "@/components/ui/Switch";
+import { CardSkeleton } from "@/components/ui/Skeleton";
 
 interface APIKeyStatus {
   status: "none" | "valid" | "invalid";
@@ -49,6 +50,7 @@ export function ApiKeysTab() {
   const [showApiKeyModal, setShowApiKeyModal] = useState<string | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [isSettingApiKey, setIsSettingApiKey] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // API Keys state
   const [apiKeys, setApiKeys] = useState<Record<string, APIKeyStatus>>({
@@ -94,6 +96,13 @@ export function ApiKeysTab() {
     }, 2000);
   };
 
+  // Simulate loading state
+  React.useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
@@ -101,44 +110,53 @@ export function ApiKeysTab() {
           API Keys
         </h3>
         <div className="space-y-4">
-          {Object.entries(apiKeys).map(([provider, keyStatus]) => (
-            <Card key={provider} padding="md" className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                    <Key className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-800 dark:text-gray-200 capitalize">
-                      {provider === "openrouter" ? "OpenRouter" : provider}
-                    </h4>
-                    <div
-                      className={`flex items-center gap-2 text-sm ${getStatusColor(
-                        keyStatus.status
-                      )}`}
-                    >
-                      {getStatusIcon(keyStatus.status)}
-                      <span>{getStatusText(keyStatus.status)}</span>
+          {isLoading ? (
+            <>
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </>
+          ) : (
+            Object.entries(apiKeys).map(([provider, keyStatus]) => (
+              <Card key={provider} padding="md" className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                      <Key className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-800 dark:text-gray-200 capitalize">
+                        {provider === "openrouter" ? "OpenRouter" : provider}
+                      </h4>
+                      <div
+                        className={`flex items-center gap-2 text-sm ${getStatusColor(
+                          keyStatus.status
+                        )}`}
+                      >
+                        {getStatusIcon(keyStatus.status)}
+                        <span>{getStatusText(keyStatus.status)}</span>
+                      </div>
                     </div>
                   </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowApiKeyModal(provider)}
+                  >
+                    {keyStatus.status === "none" ? "Set Key" : "Update Key"}
+                  </Button>
                 </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setShowApiKeyModal(provider)}
-                >
-                  {keyStatus.status === "none" ? "Set Key" : "Update Key"}
-                </Button>
-              </div>
-              {keyStatus.status === "invalid" && keyStatus.error && (
-                <div className="p-3 bg-red-50/80 dark:bg-red-900/20 rounded-lg border border-red-200/50 dark:border-red-700/50">
-                  <p className="text-sm text-red-700 dark:text-red-300">
-                    {keyStatus.error}
-                  </p>
-                </div>
-              )}
-            </Card>
-          ))}
+                {keyStatus.status === "invalid" && keyStatus.error && (
+                  <div className="p-3 bg-red-50/80 dark:bg-red-900/20 rounded-lg border border-red-200/50 dark:border-red-700/50">
+                    <p className="text-sm text-red-700 dark:text-red-300">
+                      {keyStatus.error}
+                    </p>
+                  </div>
+                )}
+              </Card>
+            ))
+          )}
         </div>
       </div>
 

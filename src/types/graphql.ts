@@ -8,6 +8,24 @@ export interface User {
   emailVerified: boolean;
   encryptKey: string;
   updatedAt: string;
+  preferences?: UserPreferences;
+}
+
+export interface UserPreferences {
+  // Localization
+  timezone: string;
+  dateFormat: string;
+  language: string;
+  use24HourFormat: boolean;
+  useMetricUnits: boolean;
+  
+  // UI Preferences
+  showSidebar: boolean;
+  showTimestamps: boolean;
+  smoothAnimations: boolean;
+  
+  // Theme (kept for future use)
+  theme?: string;
 }
 
 export interface SessionResponse {
@@ -52,6 +70,7 @@ export interface Message {
   originalContent?: MessageContent[];
   role: MessageRole;
   tokens?: number;
+  createdAt?: string; // Add timestamp for messages
 }
 
 export interface MessageContent {
@@ -135,6 +154,12 @@ export interface RegisterDto {
 export interface ChangePasswordDTO {
   newPassword: string;
   oldPassword: string;
+}
+
+export interface UpdateUserDto {
+  displayName?: string;
+  email?: string;
+  preferences?: Partial<UserPreferences>;
 }
 
 export interface GetManyChatsDto {

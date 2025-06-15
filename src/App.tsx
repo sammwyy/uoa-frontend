@@ -5,6 +5,7 @@ import { ApolloProvider } from "@apollo/client";
 import { LoadingScreen } from "./components/layout/LoadingScreen";
 import { ThemeProvider } from "./contexts/ThemeProvider";
 import { useAuth } from "./hooks/useAuth";
+import { useUserPreferences } from "./hooks/useUserPreferences";
 import { apolloClient } from "./lib/apollo/apollo-client";
 import { logger } from "./lib/logger";
 import { indexedDB } from "./lib/storage/indexed-db";
@@ -15,6 +16,18 @@ import { useConnectionStore } from "./stores/connection-store";
 // Main app content that shows loading screens
 const AppContent: React.FC = () => {
   const { isLoading: authLoading } = useAuth();
+  const { preferences } = useUserPreferences();
+
+  // Apply smooth animations class to body
+  useEffect(() => {
+    if (preferences.smoothAnimations) {
+      document.body.classList.add("smooth-animations-enabled");
+      document.body.classList.remove("smooth-animations-disabled");
+    } else {
+      document.body.classList.add("smooth-animations-disabled");
+      document.body.classList.remove("smooth-animations-enabled");
+    }
+  }, [preferences.smoothAnimations]);
 
   // Show loading screen during auth operations
   if (authLoading) {

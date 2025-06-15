@@ -15,12 +15,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useModels } from "@/hooks/useModels";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { AIModel, Chat, ChatBranch, UpdateChatDto } from "../../types/graphql";
 import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
 import { Input } from "../ui/Input";
+import { BranchDropdown } from "./BranchDropdown";
 import { BranchSelector } from "./ChatBranchSelector";
+import { CreateBranchModal } from "./CreateBranchModal";
 import { MobileConfigModal } from "./MobileConfigModal";
 import { ModelSelector } from "./ModelSelector";
 import { UserMenu } from "./UserMenu";
@@ -61,11 +64,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const { models } = useModels();
   const selectedModel = models.find((m) => m.id === chat?.modelId);
   const { toggle: toggleSidebar } = useSidebarStore();
+  const { preferences } = useUserPreferences();
 
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [mobileConfigOpen, setMobileConfigOpen] = useState(false);
+  const [createBranchModalOpen, setCreateBranchModalOpen] = useState(false);
 
   const handleStartEdit = () => {
     if (!chat || !isAuthenticated) return;
@@ -116,14 +121,22 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   const currentBranch = branches.find((b) => b._id === currentBranchId);
 
+  const handleCreateBranch = () => {
+    setCreateBranchModalOpen(true);
+  };
+
+  const handleBranchCreated = () => {
+    onBranchesUpdated();
+  };
+
   return (
     <>
       <div className="backdrop-blur-md border-b border-white/20 dark:border-gray-700/30 mx-5">
         <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6">
           {/* Left Section - Sidebar Toggle and Model Selector */}
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-            {/* Sidebar Toggle - Only show if authenticated */}
-            {isAuthenticated && (
+            {/* Sidebar Toggle - Only show if authenticated and sidebar is enabled */}
+            {isAuthenticated && preferences.showSidebar && (
               <Button
                 variant="secondary"
                 size="sm"
@@ -242,8 +255,20 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             )}
           </div>
 
-          {/* Right Section - User Menu or Sign In + Mobile Config */}
+          {/* Right Section - Branch Selector + User Menu or Sign In + Mobile Config */}
           <div className="flex items-center gap-2 sm:gap-3 flex-1 justify-end">
+            {/* Branch Selector - Only show if authenticated and has branches */}
+            {isAuthenticated && branches.length > 0 && (
+              <div className="hidden sm:block">
+                <BranchDropdown
+                  branches={branches}
+                  currentBranchId={currentBranchId}
+                  onBranchSelect={onBranchSelect}
+                  onCreateBranch={handleCreateBranch}
+                />
+              </div>
+            )}
+
             {/* Mobile Config Button - Only show if authenticated */}
             {isAuthenticated && (
               <Button
@@ -286,6 +311,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           </div>
         )}
       </div>
+
       {/* Mobile Configuration Modal */}
       <MobileConfigModal
         isOpen={mobileConfigOpen}
@@ -293,6 +319,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         models={models}
         selectedModel={selectedModel}
         onSelectModel={onSelectModel}
+      />
+
+      {/* Create Branch Modal */}
+      <CreateBranchModal
+        isOpen={createBranchModalOpen}
+        onClose={() => setCreateBranchModalOpen(false)}
+        chatId={chat?._id || ""}
+        currentBranch={currentBranch}
+        onBranchCreated={handleBranchCreated}
       />
     </>
   );

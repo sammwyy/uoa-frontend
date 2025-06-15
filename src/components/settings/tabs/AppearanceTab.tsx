@@ -5,7 +5,7 @@ import { Switch } from "@/components/ui/Switch";
 import { useTheme } from "@/hooks/useTheme";
 
 interface ThemeOption {
-  id: "default" | "deep" | "wind" | "candy" | "shad";
+  id: "default" | "deep" | "wind" | "candy" | "shad" | "yellow" | "purple" | "aqua";
   name: string;
   description: string;
   colors: {
@@ -56,8 +56,35 @@ const themeOptions: ThemeOption[] = [
     name: "Monochrome",
     description: "Pure black and white",
     colors: {
-      light: "linear-gradient(135deg, #374151, #111827)",
-      dark: "linear-gradient(135deg, #f9fafb, #e5e7eb)",
+      light: "linear-gradient(135deg, #ffffff, #f5f5f5)",
+      dark: "linear-gradient(135deg, #09090b, #171717)",
+    },
+  },
+  {
+    id: "yellow",
+    name: "Sunshine",
+    description: "Bright yellow energy",
+    colors: {
+      light: "linear-gradient(135deg, #eab308, #f59e0b)",
+      dark: "linear-gradient(135deg, #ca8a04, #d97706)",
+    },
+  },
+  {
+    id: "purple",
+    name: "Violet",
+    description: "Royal purple elegance",
+    colors: {
+      light: "linear-gradient(135deg, #a855f7, #8b5cf6)",
+      dark: "linear-gradient(135deg, #9333ea, #7c3aed)",
+    },
+  },
+  {
+    id: "aqua",
+    name: "Aqua",
+    description: "Fresh teal waters",
+    colors: {
+      light: "linear-gradient(135deg, #14b8a6, #06b6d4)",
+      dark: "linear-gradient(135deg, #0d9488, #0891b2)",
     },
   },
 ];

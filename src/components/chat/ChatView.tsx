@@ -18,6 +18,7 @@ import { LoadingScreen } from "../layout/LoadingScreen";
 import { ChatArea } from "./ChatArea";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInput } from "./ChatInput";
+import { ToolsConfig } from "./ToolsConfigModal";
 
 export interface ChatViewProps {
   chatId: string;
@@ -26,7 +27,7 @@ export interface ChatViewProps {
 export function ChatView({ chatId }: ChatViewProps) {
   const { updateChat } = useChats();
   const { isAuthenticated } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [chat, setChat] = useState<Chat | null>(null);
   const [currentBranch, setCurrentBranch] = useState<ChatBranch | null>(null);
@@ -36,12 +37,19 @@ export function ChatView({ chatId }: ChatViewProps) {
     messages: [],
     total: -1,
   });
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const { toggleTool, toolStates } = useTools(Tools);
 
   const { models } = useModels();
   const [selectedModel, setSelectedModel] = useState(
     models.find((m) => m.id === chat?.modelId)
   );
+
+  // Tools configuration state
+  const [toolsConfig, setToolsConfig] = useState<ToolsConfig>({
+    temperature: 0.7,
+    maxTokens: 2048,
+  });
 
   // Load specific chat with branches
   const loadChat = async (chatId: string) => {
@@ -81,7 +89,7 @@ export function ChatView({ chatId }: ChatViewProps) {
   // Load messages for a branch
   const loadMessages = async (params: GetMessagesDto, append = false) => {
     try {
-      setLoading(true);
+      setMessagesLoading(true);
       setError(null);
 
       logger.info("Loading messages for branch:", params.branchId);
@@ -108,7 +116,7 @@ export function ChatView({ chatId }: ChatViewProps) {
         }
 
         logger.info(
-          `Loaded ${messages.messages.length} messages for branch ${params.branchId}`
+          `Loaded ${data.getChatMessages.messages.length} messages for branch ${params.branchId}`
         );
       }
     } catch (error) {
@@ -117,7 +125,7 @@ export function ChatView({ chatId }: ChatViewProps) {
       setError(errorMessage);
       logger.error("Failed to load messages:", error);
     } finally {
-      setLoading(false);
+      setMessagesLoading(false);
     }
   };
 
@@ -137,6 +145,12 @@ export function ChatView({ chatId }: ChatViewProps) {
 
   const handleSendMessage = async (message: string) => {
     console.log("Sending message:", message, " with model:", selectedModel?.id);
+    console.log("Tools config:", toolsConfig);
+  };
+
+  const handleConfigChange = (config: ToolsConfig) => {
+    setToolsConfig(config);
+    console.log("Tools configuration updated:", config);
   };
 
   useEffect(() => {
@@ -151,12 +165,33 @@ export function ChatView({ chatId }: ChatViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentBranch]);
 
-  if (!chat && !error) {
-    return <LoadingScreen message="Loading chat..." />;
+  // Show loading screen while loading chat data
+  if (loading && !chat) {
+    return <LoadingScreen message="Loading chat..." submessage="Please wait while we load your conversation" />;
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <div className="w-full h-[100vh] sm:h-[95vh] bg-chat-container backdrop-blur-md rounded-none sm:rounded-3xl shadow-glass dark:shadow-glass-dark border-0 sm:border border-white/20 dark:border-gray-700/30 relative overflow-hidden flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center mx-auto">
+            <span className="text-2xl">⚠️</span>
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+            Error Loading Chat
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 max-w-md">
+            {error}
+          </p>
+          <button 
+            onClick={() => loadChat(chatId)}
+            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -179,16 +214,19 @@ export function ChatView({ chatId }: ChatViewProps) {
 
       {/* SCROLLABLE CONTENT AREA - Full height with padding for floating elements */}
       <div className="h-full overflow-y-auto">
-        <ChatArea messages={messages.messages} isLoading={loading} />
+        <ChatArea messages={messages.messages} isLoading={messagesLoading} />
       </div>
 
       {/* FLOATING INPUT AND TOOLS - Positioned absolutely at bottom */}
       <div className="absolute bottom-0 left-0 right-0 z-20 p-3 sm:p-6 space-y-3 sm:space-y-4 bg-gradient-to-t from-chat-container via-chat-container/95 to-transparent">
         <ChatInput
           onSendMessage={handleSendMessage}
-          isLoading={loading}
+          isLoading={messagesLoading}
           toggleTool={toggleTool}
           toolStates={toolStates}
+          currentModel={selectedModel}
+          onConfigChange={handleConfigChange}
+          toolsConfig={toolsConfig}
           placeholder={"Type your message here... (Shift+Enter for new line)"}
         />
       </div>

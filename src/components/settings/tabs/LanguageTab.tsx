@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/Card";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Switch } from "@/components/ui/Switch";
 import { Clock } from "lucide-react";
-import { useState } from "react";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 interface LanguageOption {
   value: string;
@@ -24,17 +24,17 @@ interface DateFormatOption {
 }
 
 const languageOptions: LanguageOption[] = [
-  { value: "en-US", label: "English", flag: "🇺🇸", region: "United States" },
+  { value: "en", label: "English", flag: "🇺🇸", region: "United States" },
   { value: "en-GB", label: "English", flag: "🇬🇧", region: "United Kingdom" },
-  { value: "es-ES", label: "Español", flag: "🇪🇸", region: "España" },
+  { value: "es", label: "Español", flag: "🇪🇸", region: "España" },
   { value: "es-MX", label: "Español", flag: "🇲🇽", region: "México" },
-  { value: "fr-FR", label: "Français", flag: "🇫🇷", region: "France" },
-  { value: "de-DE", label: "Deutsch", flag: "🇩🇪", region: "Deutschland" },
-  { value: "it-IT", label: "Italiano", flag: "🇮🇹", region: "Italia" },
-  { value: "pt-BR", label: "Português", flag: "🇧🇷", region: "Brasil" },
-  { value: "ja-JP", label: "日本語", flag: "🇯🇵", region: "Japan" },
-  { value: "ko-KR", label: "한국어", flag: "🇰🇷", region: "Korea" },
-  { value: "zh-CN", label: "中文", flag: "🇨🇳", region: "简体" },
+  { value: "fr", label: "Français", flag: "🇫🇷", region: "France" },
+  { value: "de", label: "Deutsch", flag: "🇩🇪", region: "Deutschland" },
+  { value: "it", label: "Italiano", flag: "🇮🇹", region: "Italia" },
+  { value: "pt", label: "Português", flag: "🇧🇷", region: "Brasil" },
+  { value: "ja", label: "日本語", flag: "🇯🇵", region: "Japan" },
+  { value: "ko", label: "한국어", flag: "🇰🇷", region: "Korea" },
+  { value: "zh", label: "中文", flag: "🇨🇳", region: "简体" },
   { value: "zh-TW", label: "中文", flag: "🇹🇼", region: "繁體" },
 ];
 
@@ -64,10 +64,7 @@ const dateFormatOptions: DateFormatOption[] = [
 ];
 
 export function LanguageTab() {
-  // Language settings state
-  const [selectedLanguage, setSelectedLanguage] = useState("en-US");
-  const [selectedTimeZone, setSelectedTimeZone] = useState("America/New_York");
-  const [selectedDateFormat, setSelectedDateFormat] = useState("MM/DD/YYYY");
+  const { preferences, updatePreference, isLoading } = useUserPreferences();
 
   return (
     <div className="space-y-6">
@@ -86,9 +83,10 @@ export function LanguageTab() {
                 label: `${lang.flag} ${lang.label}`,
                 description: lang.region,
               }))}
-              value={selectedLanguage}
-              onSelect={setSelectedLanguage}
+              value={preferences.language}
+              onSelect={(value) => updatePreference("language", value)}
               placeholder="Select language..."
+              disabled={isLoading}
             />
           </div>
 
@@ -103,9 +101,10 @@ export function LanguageTab() {
                 description: tz.offset,
                 icon: Clock,
               }))}
-              value={selectedTimeZone}
-              onSelect={setSelectedTimeZone}
+              value={preferences.timezone}
+              onSelect={(value) => updatePreference("timezone", value)}
               placeholder="Select time zone..."
+              disabled={isLoading}
             />
           </div>
 
@@ -119,9 +118,10 @@ export function LanguageTab() {
                 label: format.label,
                 description: format.example,
               }))}
-              value={selectedDateFormat}
-              onSelect={setSelectedDateFormat}
+              value={preferences.dateFormat}
+              onSelect={(value) => updatePreference("dateFormat", value)}
               placeholder="Select date format..."
+              disabled={isLoading}
             />
           </div>
         </Card>
@@ -133,26 +133,74 @@ export function LanguageTab() {
         </h3>
         <Card padding="lg" className="space-y-4">
           <Switch
-            checked={true}
-            onChange={() => {}}
+            checked={preferences.use24HourFormat}
+            onChange={(checked) => updatePreference("use24HourFormat", checked)}
+            disabled={isLoading}
             label="Use 24-hour time format"
             description="Display time in 24-hour format (14:30) instead of 12-hour format (2:30 PM)"
           />
 
           <Switch
-            checked={false}
-            onChange={() => {}}
+            checked={preferences.useMetricUnits}
+            onChange={(checked) => updatePreference("useMetricUnits", checked)}
+            disabled={isLoading}
             label="Use metric units"
             description="Display measurements in metric units (km, kg, °C) instead of imperial"
           />
-
-          <Switch
-            checked={true}
-            onChange={() => {}}
-            label="Auto-detect language"
-            description="Automatically detect and suggest language based on your location"
-          />
         </Card>
+      </div>
+
+      {/* Current Settings Preview */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          Preview
+        </h3>
+        <Card padding="lg" className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Current Time:</span>
+              <p className="text-gray-600 dark:text-gray-400">
+                {new Date().toLocaleTimeString(preferences.language, {
+                  timeZone: preferences.timezone,
+                  hour12: !preferences.use24HourFormat,
+                })}
+              </p>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Current Date:</span>
+              <p className="text-gray-600 dark:text-gray-400">
+                {new Date().toLocaleDateString(preferences.language, {
+                  timeZone: preferences.timezone,
+                })}
+              </p>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Temperature:</span>
+              <p className="text-gray-600 dark:text-gray-400">
+                {preferences.useMetricUnits ? "22°C" : "72°F"}
+              </p>
+            </div>
+            <div>
+              <span className="font-medium text-gray-700 dark:text-gray-300">Distance:</span>
+              <p className="text-gray-600 dark:text-gray-400">
+                {preferences.useMetricUnits ? "5 km" : "3.1 miles"}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Settings Info */}
+      <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-800/50 p-3 rounded-lg">
+        <p className="mb-1">
+          <strong>About Language Settings:</strong>
+        </p>
+        <ul className="space-y-1 list-disc list-inside">
+          <li>Language settings are synced to your account across all devices</li>
+          <li>Time zone affects how timestamps are displayed in conversations</li>
+          <li>Date format applies to all dates shown in the interface</li>
+          <li>Regional settings affect units and number formatting</li>
+        </ul>
       </div>
     </div>
   );

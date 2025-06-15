@@ -198,7 +198,7 @@ export const useChats = () => {
       setLoading(true);
       setError(null);
 
-      logger.info("Updating chat:", id);
+      logger.info("Updating chat:", id, updateData);
 
       const { data } = await updateChatMutation({
         variables: { id, payload: updateData },
@@ -218,6 +218,8 @@ export const useChats = () => {
       setError(errorMessage);
       logger.error("Failed to update chat:", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 

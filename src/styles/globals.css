@@ -362,118 +362,404 @@
   --bg-selected-hover: 80 45 65;
 }
 
-/* Theme: Shad / Monochrome */
+/* Theme: Shad / Monochrome - Pure Black & White like shadcn */
 .theme-shad {
-  --primary-50: 249 250 251;
-  --primary-100: 243 244 246;
-  --primary-200: 229 231 235;
-  --primary-300: 209 213 219;
-  --primary-400: 156 163 175;
-  --primary-500: 107 114 128;
-  --primary-600: 75 85 99;
-  --primary-700: 55 65 81;
-  --primary-800: 31 41 55;
-  --primary-900: 17 24 39;
-  --primary-950: 3 7 18;
+  --primary-50: 255 255 255;
+  --primary-100: 255 255 255;
+  --primary-200: 255 255 255;
+  --primary-300: 255 255 255;
+  --primary-400: 255 255 255;
+  --primary-500: 255 255 255;
+  --primary-600: 255 255 255;
+  --primary-700: 255 255 255;
+  --primary-800: 255 255 255;
+  --primary-900: 255 255 255;
+  --primary-950: 255 255 255;
 
-  --secondary-50: 248 250 252;
-  --secondary-100: 241 245 249;
-  --secondary-200: 226 232 240;
-  --secondary-300: 203 213 225;
-  --secondary-400: 148 163 184;
-  --secondary-500: 100 116 139;
-  --secondary-600: 71 85 105;
-  --secondary-700: 51 65 85;
-  --secondary-800: 30 41 59;
-  --secondary-900: 15 23 42;
-  --secondary-950: 2 6 23;
+  --secondary-50: 255 255 255;
+  --secondary-100: 255 255 255;
+  --secondary-200: 255 255 255;
+  --secondary-300: 255 255 255;
+  --secondary-400: 255 255 255;
+  --secondary-500: 255 255 255;
+  --secondary-600: 255 255 255;
+  --secondary-700: 255 255 255;
+  --secondary-800: 255 255 255;
+  --secondary-900: 255 255 255;
+  --secondary-950: 255 255 255;
+
+  /* Theme gradient - Pure white background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(255, 255, 255),
+    rgb(255, 255, 255),
+    rgb(255, 255, 255)
+  );
+
+  /* Chat container - Pure white background */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(255, 255, 255),
+    rgb(255, 255, 255),
+    rgb(255, 255, 255)
+  );
+
+  /* Theme-specific background variations */
+  --bg-primary: 255 255 255;
+  --bg-secondary: 255 255 255;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 250 250 250;
+  --bg-surface-active: 245 245 245;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 250 250 250;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 250 250 250;
+  --bg-selected: 250 250 250;
+  --bg-selected-hover: 245 245 245;
+}
+
+/* Dark mode for Shad theme - Pure black */
+.dark.theme-shad {
+  --primary-50: 0 0 0;
+  --primary-100: 0 0 0;
+  --primary-200: 0 0 0;
+  --primary-300: 0 0 0;
+  --primary-400: 0 0 0;
+  --primary-500: 0 0 0;
+  --primary-600: 0 0 0;
+  --primary-700: 0 0 0;
+  --primary-800: 0 0 0;
+  --primary-900: 0 0 0;
+  --primary-950: 0 0 0;
+
+  --secondary-50: 0 0 0;
+  --secondary-100: 0 0 0;
+  --secondary-200: 0 0 0;
+  --secondary-300: 0 0 0;
+  --secondary-400: 0 0 0;
+  --secondary-500: 0 0 0;
+  --secondary-600: 0 0 0;
+  --secondary-700: 0 0 0;
+  --secondary-800: 0 0 0;
+  --secondary-900: 0 0 0;
+  --secondary-950: 0 0 0;
+
+  /* Dark theme gradient - Pure black background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(0, 0, 0),
+    rgb(0, 0, 0),
+    rgb(0, 0, 0)
+  );
+
+  /* Chat container - Pure black background */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(0, 0, 0),
+    rgb(0, 0, 0),
+    rgb(0, 0, 0)
+  );
+
+  /* Dark mode background variations */
+  --bg-primary: 0 0 0;
+  --bg-secondary: 10 10 10;
+  --bg-surface: 20 20 20;
+  --bg-surface-hover: 30 30 30;
+  --bg-surface-active: 40 40 40;
+  --bg-input: 20 20 20;
+  --bg-input-hover: 30 30 30;
+  --bg-modal: 20 20 20;
+  --bg-dropdown: 20 20 20;
+  --bg-card: 20 20 20;
+  --bg-card-hover: 30 30 30;
+  --bg-selected: 40 40 40;
+  --bg-selected-hover: 50 50 50;
+}
+
+/* Theme: Yellow / Sunshine */
+.theme-yellow {
+  --primary-50: 254 252 232;
+  --primary-100: 254 249 195;
+  --primary-200: 254 240 138;
+  --primary-300: 253 224 71;
+  --primary-400: 250 204 21;
+  --primary-500: 234 179 8;
+  --primary-600: 202 138 4;
+  --primary-700: 161 98 7;
+  --primary-800: 133 77 14;
+  --primary-900: 113 63 18;
+  --primary-950: 66 32 6;
+
+  --secondary-50: 255 251 235;
+  --secondary-100: 254 243 199;
+  --secondary-200: 253 230 138;
+  --secondary-300: 252 211 77;
+  --secondary-400: 251 191 36;
+  --secondary-500: 245 158 11;
+  --secondary-600: 217 119 6;
+  --secondary-700: 180 83 9;
+  --secondary-800: 146 64 14;
+  --secondary-900: 120 53 15;
+  --secondary-950: 69 26 3;
 
   /* Theme gradient - SOFT background */
   --theme-gradient: linear-gradient(
     135deg,
-    rgb(253, 254, 255),
-    rgb(251, 252, 253),
-    rgb(254, 255, 255)
+    rgb(255, 254, 248),
+    rgb(254, 252, 232),
+    rgb(255, 251, 235)
   );
 
   /* Chat container - STRONGER color (previous background) */
   --chat-container: linear-gradient(
     135deg,
-    rgb(249, 250, 251),
-    rgb(243, 244, 246),
-    rgb(248, 250, 252)
+    rgb(254, 249, 195),
+    rgb(254, 243, 199),
+    rgb(254, 252, 232)
   );
 
   /* Theme-specific background variations */
-  --bg-primary: 249 250 251;
-  --bg-secondary: 243 244 246;
+  --bg-primary: 254 252 232;
+  --bg-secondary: 254 249 195;
   --bg-surface: 255 255 255;
-  --bg-surface-hover: 249 250 251;
-  --bg-surface-active: 229 231 235;
+  --bg-surface-hover: 254 252 232;
+  --bg-surface-active: 254 240 138;
   --bg-input: 255 255 255;
-  --bg-input-hover: 249 250 251;
+  --bg-input-hover: 254 252 232;
   --bg-modal: 255 255 255;
   --bg-dropdown: 255 255 255;
   --bg-card: 255 255 255;
-  --bg-card-hover: 249 250 251;
-  --bg-selected: 243 244 246;
-  --bg-selected-hover: 229 231 235;
+  --bg-card-hover: 254 252 232;
+  --bg-selected: 254 249 195;
+  --bg-selected-hover: 254 240 138;
 }
 
-/* Dark mode adjustments for Shad theme */
-.dark.theme-shad {
-  --primary-50: 3 7 18;
-  --primary-100: 17 24 39;
-  --primary-200: 31 41 55;
-  --primary-300: 55 65 81;
-  --primary-400: 75 85 99;
-  --primary-500: 107 114 128;
-  --primary-600: 156 163 175;
-  --primary-700: 209 213 219;
-  --primary-800: 229 231 235;
-  --primary-900: 243 244 246;
-  --primary-950: 249 250 251;
-
-  --secondary-50: 2 6 23;
-  --secondary-100: 15 23 42;
-  --secondary-200: 30 41 59;
-  --secondary-300: 51 65 85;
-  --secondary-400: 71 85 105;
-  --secondary-500: 100 116 139;
-  --secondary-600: 148 163 184;
-  --secondary-700: 203 213 225;
-  --secondary-800: 226 232 240;
-  --secondary-900: 241 245 249;
-  --secondary-950: 248 250 252;
-
+.dark.theme-yellow {
   /* Dark theme gradient - SOFT background */
   --theme-gradient: linear-gradient(
     135deg,
-    rgb(8, 12, 16),
-    rgb(12, 16, 22),
-    rgb(10, 14, 19)
+    rgb(25, 20, 8),
+    rgb(30, 25, 10),
+    rgb(27, 22, 9)
   );
 
   /* Chat container - STRONGER color (previous background) */
   --chat-container: linear-gradient(
     135deg,
-    rgb(15, 18, 22),
-    rgb(25, 30, 38),
-    rgb(20, 24, 30)
+    rgb(40, 32, 12),
+    rgb(50, 40, 15),
+    rgb(45, 36, 13)
   );
 
-  /* Dark mode background variations */
-  --bg-primary: 15 18 22;
-  --bg-secondary: 25 30 38;
-  --bg-surface: 30 35 45;
-  --bg-surface-hover: 40 45 55;
-  --bg-surface-active: 45 50 60;
-  --bg-input: 30 35 45;
-  --bg-input-hover: 40 45 55;
-  --bg-modal: 30 35 45;
-  --bg-dropdown: 30 35 45;
-  --bg-card: 30 35 45;
-  --bg-card-hover: 40 45 55;
-  --bg-selected: 45 50 60;
-  --bg-selected-hover: 55 60 70;
+  --bg-primary: 40 32 12;
+  --bg-secondary: 50 40 15;
+  --bg-surface: 55 44 18;
+  --bg-surface-hover: 65 52 22;
+  --bg-surface-active: 75 60 25;
+  --bg-input: 55 44 18;
+  --bg-input-hover: 65 52 22;
+  --bg-modal: 55 44 18;
+  --bg-dropdown: 55 44 18;
+  --bg-card: 55 44 18;
+  --bg-card-hover: 65 52 22;
+  --bg-selected: 75 60 25;
+  --bg-selected-hover: 85 68 28;
+}
+
+/* Theme: Purple / Violet */
+.theme-purple {
+  --primary-50: 250 245 255;
+  --primary-100: 243 232 255;
+  --primary-200: 233 213 255;
+  --primary-300: 216 180 254;
+  --primary-400: 196 181 253;
+  --primary-500: 168 85 247;
+  --primary-600: 147 51 234;
+  --primary-700: 126 34 206;
+  --primary-800: 107 33 168;
+  --primary-900: 88 28 135;
+  --primary-950: 59 7 100;
+
+  --secondary-50: 245 243 255;
+  --secondary-100: 237 233 254;
+  --secondary-200: 221 214 254;
+  --secondary-300: 196 181 253;
+  --secondary-400: 167 139 250;
+  --secondary-500: 139 92 246;
+  --secondary-600: 124 58 237;
+  --secondary-700: 109 40 217;
+  --secondary-800: 91 33 182;
+  --secondary-900: 76 29 149;
+  --secondary-950: 46 16 101;
+
+  /* Theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(252, 250, 255),
+    rgb(250, 245, 255),
+    rgb(245, 243, 255)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(243, 232, 255),
+    rgb(237, 233, 254),
+    rgb(250, 245, 255)
+  );
+
+  /* Theme-specific background variations */
+  --bg-primary: 250 245 255;
+  --bg-secondary: 243 232 255;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 252 250 255;
+  --bg-surface-active: 233 213 255;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 252 250 255;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 252 250 255;
+  --bg-selected: 243 232 255;
+  --bg-selected-hover: 233 213 255;
+}
+
+.dark.theme-purple {
+  /* Dark theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(20, 15, 25),
+    rgb(25, 18, 30),
+    rgb(22, 16, 27)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(35, 25, 45),
+    rgb(45, 30, 55),
+    rgb(40, 27, 50)
+  );
+
+  --bg-primary: 35 25 45;
+  --bg-secondary: 45 30 55;
+  --bg-surface: 50 35 65;
+  --bg-surface-hover: 60 45 75;
+  --bg-surface-active: 70 50 85;
+  --bg-input: 50 35 65;
+  --bg-input-hover: 60 45 75;
+  --bg-modal: 50 35 65;
+  --bg-dropdown: 50 35 65;
+  --bg-card: 50 35 65;
+  --bg-card-hover: 60 45 75;
+  --bg-selected: 70 50 85;
+  --bg-selected-hover: 80 60 95;
+}
+
+/* Theme: Aqua / Teal */
+.theme-aqua {
+  --primary-50: 240 253 250;
+  --primary-100: 204 251 241;
+  --primary-200: 153 246 228;
+  --primary-300: 94 234 212;
+  --primary-400: 45 212 191;
+  --primary-500: 20 184 166;
+  --primary-600: 13 148 136;
+  --primary-700: 15 118 110;
+  --primary-800: 17 94 89;
+  --primary-900: 19 78 74;
+  --primary-950: 4 47 46;
+
+  --secondary-50: 236 254 255;
+  --secondary-100: 207 250 254;
+  --secondary-200: 165 243 252;
+  --secondary-300: 103 232 249;
+  --secondary-400: 34 211 238;
+  --secondary-500: 6 182 212;
+  --secondary-600: 8 145 178;
+  --secondary-700: 14 116 144;
+  --secondary-800: 21 94 117;
+  --secondary-900: 22 78 99;
+  --secondary-950: 8 51 68;
+
+  /* Theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(248, 254, 252),
+    rgb(240, 253, 250),
+    rgb(236, 254, 255)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(204, 251, 241),
+    rgb(207, 250, 254),
+    rgb(240, 253, 250)
+  );
+
+  /* Theme-specific background variations */
+  --bg-primary: 240 253 250;
+  --bg-secondary: 204 251 241;
+  --bg-surface: 255 255 255;
+  --bg-surface-hover: 248 254 252;
+  --bg-surface-active: 153 246 228;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 248 254 252;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 248 254 252;
+  --bg-selected: 204 251 241;
+  --bg-selected-hover: 153 246 228;
+}
+
+.dark.theme-aqua {
+  /* Dark theme gradient - SOFT background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(8, 20, 18),
+    rgb(10, 25, 22),
+    rgb(9, 22, 20)
+  );
+
+  /* Chat container - STRONGER color (previous background) */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(15, 35, 30),
+    rgb(20, 45, 38),
+    rgb(17, 40, 34)
+  );
+
+  --bg-primary: 15 35 30;
+  --bg-secondary: 20 45 38;
+  --bg-surface: 25 50 43;
+  --bg-surface-hover: 35 60 53;
+  --bg-surface-active: 40 70 60;
+  --bg-input: 25 50 43;
+  --bg-input-hover: 35 60 53;
+  --bg-modal: 25 50 43;
+  --bg-dropdown: 25 50 43;
+  --bg-card: 25 50 43;
+  --bg-card-hover: 35 60 53;
+  --bg-selected: 40 70 60;
+  --bg-selected-hover: 50 80 70;
+}
+
+/* Animation classes for smooth animations preference */
+.smooth-animations-enabled * {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+.smooth-animations-enabled *:hover {
+  transition-duration: 150ms;
+}
+
+.smooth-animations-disabled * {
+  transition: none !important;
+  animation: none !important;
 }

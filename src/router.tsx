@@ -20,8 +20,11 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       >
+        {/* Root path shows welcome page */}
         <Route index element={<AppView />} />
+        {/* New chat also shows welcome page */}
         <Route path="new" element={<AppView />} />
+        {/* Specific chat shows chat view */}
         <Route path="c/:chatId" element={<AppView />} />
       </Route>
     </Routes>
