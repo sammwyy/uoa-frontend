@@ -31,6 +31,7 @@ interface ChatHeaderProps {
   chat: Chat;
   updateChat: (id: string, updateData: UpdateChatDto) => void;
   onSelectModel: (model: AIModel) => void;
+  selectedModel?: AIModel | null | undefined;
   onOpenSettings: () => void;
   hideModelSelector?: boolean;
   isAuthenticated?: boolean;
@@ -50,6 +51,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   updateChat,
   branches,
   onSelectModel,
+  selectedModel,
   onOpenSettings,
   hideModelSelector = false,
   isAuthenticated,
@@ -60,9 +62,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onToggleBranches,
   messagesCount = 0,
 }) => {
-  const { models } = useModels();
-  const selectedModel = models.find((m) => m.id === chat?.modelId);
   const { toggle: toggleSidebar } = useSidebarStore();
+  const { models } = useModels();
 
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);

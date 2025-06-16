@@ -2,9 +2,11 @@ import {
   CREATE_CHAT_MUTATION,
   DELETE_CHAT_MUTATION,
   GET_CHATS_QUERY,
+  SEND_MESSAGE_MUTATION,
   UPDATE_CHAT_MUTATION,
 } from "@/lib/apollo/queries";
 import type {
+  AddMessageDto,
   Chat,
   ChatsResponse,
   GetManyChatsDto,
@@ -35,6 +37,7 @@ export const useChats = () => {
   const [createChatMutation] = useMutation(CREATE_CHAT_MUTATION);
   const [updateChatMutation] = useMutation(UPDATE_CHAT_MUTATION);
   const [deleteChatMutation] = useMutation(DELETE_CHAT_MUTATION);
+  const [sendMessageMutation] = useMutation(SEND_MESSAGE_MUTATION);
 
   // Initialize store on mount
   useEffect(() => {
@@ -230,6 +233,35 @@ export const useChats = () => {
     }
   };
 
+  // Send message to chat
+  const sendMessage = async (data: AddMessageDto) => {
+    try {
+      store.setLoading(true);
+      store.clearError();
+
+      logger.info("Sending message:", data);
+
+      const { data: response } = await sendMessageMutation({
+        variables: { payload: data },
+      });
+
+      if (!response?.sendMessage) {
+        throw new Error("Failed to send message: No data returned");
+      }
+
+      logger.info("Message sent successfully:", response.sendMessage._id);
+      return response.sendMessage;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send message";
+      store.setError(errorMessage);
+      logger.error("Failed to send message:", error);
+      throw error;
+    } finally {
+      store.setLoading(false);
+    }
+  };
+
   // Force sync with server
   const forceSyncWithServer = async () => {
     if (!isOnline) {
@@ -269,6 +301,7 @@ export const useChats = () => {
     deleteChat,
     setCurrentChat: store.setCurrentChat,
     clearError: store.clearError,
+    sendMessage,
 
     // Utilities
     forceSyncWithServer,

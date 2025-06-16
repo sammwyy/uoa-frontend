@@ -188,6 +188,22 @@ class SocketManager {
         this.listeners["apikey:deleted"](apiKeyId);
       }
     });
+
+    // User events
+    this.socket.on("user:updated", (user) => {
+      logger.debug("User updated:", user._id);
+      if (this.listeners["user:updated"]) {
+        this.listeners["user:updated"](user);
+      }
+    });
+
+    // Preferences events
+    this.socket.on("preferences:updated", (preferences) => {
+      logger.debug("Preferences updated");
+      if (this.listeners["preferences:updated"]) {
+        this.listeners["preferences:updated"](preferences);
+      }
+    });
   }
 
   /**

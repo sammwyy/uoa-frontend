@@ -3,102 +3,160 @@
  */
 
 import { useQuery } from "@apollo/client";
-import React from "react";
+import { useEffect } from "react";
 
 import { GET_AVAILABLE_MODELS_QUERY } from "@/lib/apollo/queries";
 import { logger } from "@/lib/logger";
-import { useAuthStore } from "@/stores/auth-store";
 import { useConnectionStore } from "@/stores/connection-store";
 import { useModelStore } from "@/stores/model-store";
+import { useAuth } from "./useAuth";
 
 export const useModels = () => {
-  const {
-    models,
-    isLoading,
-    error,
-    setModels,
-    setLoading,
-    setError,
-    clearError,
-    getModelsByProvider,
-    getModelById,
-    syncWithOfflineData,
-  } = useModelStore();
-
+  const store = useModelStore();
   const { isOnline } = useConnectionStore();
-  const { encryptKey } = useAuthStore();
+  const { session } = useAuth();
+  const decryptKey = session?.decryptKey;
 
-  const {
-    loading,
-    error: queryError,
-    refetch,
-  } = useQuery(GET_AVAILABLE_MODELS_QUERY, {
-    variables: { rawDecryptKey: encryptKey || "" },
-    skip: !encryptKey, // Skip query if no encrypt key
-    fetchPolicy: "cache-and-network",
-    onCompleted: (data) => {
+  // Query for loading models (controlled manually)
+  const { refetch: refetchModels, loading: queryLoading } = useQuery(
+    GET_AVAILABLE_MODELS_QUERY,
+    {
+      skip: true, // We'll trigger this manually
+      fetchPolicy: isOnline ? "cache-and-network" : "cache-only",
+      errorPolicy: "ignore",
+      notifyOnNetworkStatusChange: false,
+    }
+  );
+
+  // Initialize store on mount
+  useEffect(() => {
+    if (store.isInitialized) {
+      return;
+    }
+
+    if (isOnline) {
+      loadModels().catch((error) => {
+        logger.warn("Failed to sync models on mount:", error);
+      });
+    } else {
+      store.loadFromCache();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-refetch when connection is restored (only if we don't have models already)
+  useEffect(() => {
+    if (
+      isOnline &&
+      store.isInitialized &&
+      decryptKey &&
+      store.models.length === 0
+    ) {
+      logger.info("Connection restored, syncing models");
+      loadModels().catch((error) => {
+        logger.warn("Failed to sync models after reconnection:", error);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, store.isInitialized, decryptKey]);
+
+  // Load models from server
+  const loadModels = async () => {
+    try {
+      store.setLoading(true);
+      store.clearError();
+
+      // If no decrypt key available
+      if (!decryptKey) {
+        store.setError("Decryption key not available");
+        if (!store.isInitialized) {
+          await store.loadFromCache();
+        }
+        return;
+      }
+
+      // If offline, use cache only
+      if (!isOnline) {
+        if (!store.isInitialized) {
+          await store.loadFromCache();
+        }
+        return;
+      }
+
+      logger.info("Loading available models");
+
+      const { data, error } = await refetchModels({
+        rawDecryptKey: decryptKey,
+      });
+
+      if (error && !data) {
+        throw error;
+      }
+
       if (data?.getAvailableModels) {
-        setModels(data.getAvailableModels);
+        // Update store
+        store.setModels(data.getAvailableModels);
+
+        // Cache for offline use
+        await store.saveToCache();
+
         logger.info(`Loaded ${data.getAvailableModels.length} models`);
       }
-    },
-    onError: (error) => {
-      const errorMessage = error.message || "Failed to load models";
-      setError(errorMessage);
-      logger.error("Failed to load models:", error);
-
-      // Fallback to offline data on error
-      if (isOnline) {
-        syncWithOfflineData();
-      }
-    },
-  });
-
-  // Update loading state from Apollo
-  React.useEffect(() => {
-    setLoading(loading);
-  }, [loading, setLoading]);
-
-  // Load available models manually
-  const loadModels = async () => {
-    if (!encryptKey) {
-      setError("Encryption key not available");
-      return;
-    }
-
-    if (!isOnline) {
-      // Load from offline storage when offline
-      await syncWithOfflineData();
-      return;
-    }
-
-    try {
-      setError(null);
-      logger.info("Loading available models");
-      await refetch();
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load models";
-      setError(errorMessage);
+      store.setError(errorMessage);
       logger.error("Failed to load models:", error);
 
-      // Fallback to offline data on error
-      if (isOnline) {
-        await syncWithOfflineData();
+      // Fallback to cache if network request failed
+      if (isOnline && !store.isInitialized) {
+        await store.loadFromCache();
       }
+    } finally {
+      store.setLoading(false);
+    }
+  };
+
+  // Force sync with server
+  const forceSyncWithServer = async () => {
+    if (!isOnline) {
+      logger.warn("Cannot sync: offline");
+      return false;
+    }
+
+    if (!decryptKey) {
+      logger.warn("Cannot sync: no decrypt key");
+      return false;
+    }
+
+    try {
+      store.setLoading(true);
+      await loadModels();
+      logger.info("Manual sync completed");
+      return true;
+    } catch (error) {
+      logger.error("Manual sync failed:", error);
+      return false;
+    } finally {
+      store.setLoading(false);
     }
   };
 
   return {
     // State
-    models,
-    isLoading: loading || isLoading,
-    error: queryError?.message || error,
+    models: store.models,
+    isLoading: store.isLoading || queryLoading,
+    error: store.error,
+    isInitialized: store.isInitialized,
+    isOnline,
 
     // Actions
     loadModels,
-    getModelsByProvider,
-    getModelById,
-    clearError,
+    getModelsByProvider: store.getModelsByProvider,
+    getModelById: store.getModelById,
+    clearError: store.clearError,
+
+    // Utilities
+    forceSyncWithServer,
   };
 };

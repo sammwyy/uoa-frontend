@@ -2,7 +2,6 @@ import { Bot, Key, Sliders, Thermometer } from "lucide-react";
 import React, { useState } from "react";
 
 import { useApiKeys } from "@/hooks/useApiKeys";
-import { useModels } from "@/hooks/useModels";
 import { AIModel } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
@@ -34,7 +33,6 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
   },
 }) => {
   const { apiKeys } = useApiKeys();
-  const { models } = useModels();
 
   const [config, setConfig] = useState<ToolsConfig>(initialConfig);
 

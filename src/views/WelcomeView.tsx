@@ -97,7 +97,7 @@ export const WelcomeView: React.FC = () => {
         await sendMessage({
           branchId: newChat.defaultBranch._id,
           prompt: message,
-          modelId: defaultModel?.id || "gpt-4",
+          modelId: defaultModel?.id,
           apiKeyId: "", // Use default API key
           rawDecryptKey: "", // Will be handled by the backend
         });

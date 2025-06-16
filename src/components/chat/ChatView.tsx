@@ -25,8 +25,8 @@ export interface ChatViewProps {
 }
 
 export function ChatView({ chatId }: ChatViewProps) {
-  const { updateChat } = useChats();
-  const { isAuthenticated } = useAuth();
+  const { updateChat, sendMessage } = useChats();
+  const { isAuthenticated, session } = useAuth();
   const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [chat, setChat] = useState<Chat | null>(null);
@@ -144,6 +144,44 @@ export function ChatView({ chatId }: ChatViewProps) {
   };
 
   const handleSendMessage = async (message: string) => {
+    if (!chat) {
+      console.error("Chat not loaded, cannot send message");
+      return;
+    }
+
+    if (!message.trim()) {
+      console.warn("Empty message, not sending");
+      return;
+    }
+
+    if (!selectedModel) {
+      console.error("No model selected, cannot send message");
+      return;
+    }
+
+    if (!currentBranch?._id) {
+      console.error("No current branch selected, cannot send message");
+      return;
+    }
+
+    if (!session?.decryptKey) {
+      console.error("No session decrypt key available, cannot send message");
+      return;
+    }
+
+    if (!chat.apiKeyId) {
+      console.error("Chat does not have an API key, cannot send message");
+      return;
+    }
+
+    sendMessage({
+      apiKeyId: chat.apiKeyId,
+      branchId: currentBranch?._id,
+      modelId: selectedModel.id,
+      prompt: message,
+      rawDecryptKey: session?.decryptKey,
+    });
+
     console.log("Sending message:", message, " with model:", selectedModel?.id);
     console.log("Tools config:", toolsConfig);
   };
@@ -205,6 +243,7 @@ export function ChatView({ chatId }: ChatViewProps) {
           onBranchesUpdated={onBranchesUpdated}
           onOpenSettings={() => {}}
           onSelectModel={onChangeModel}
+          selectedModel={selectedModel}
           branches={branches}
           currentBranchId={currentBranch?._id}
           messagesCount={messages.total}

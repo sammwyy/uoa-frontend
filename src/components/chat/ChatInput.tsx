@@ -2,6 +2,7 @@ import { Mic, Paperclip, PenTool, Send } from "lucide-react";
 import React, { useState } from "react";
 
 import { ToolState } from "@/hooks/useTools";
+import { AIModel } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { Textarea } from "../ui/TextArea";
 import { AudioRecordModal } from "./AudioRecordModal";
@@ -16,7 +17,7 @@ interface ChatInputProps {
   placeholder?: string;
   toggleTool?: (toolId: string) => void;
   toolStates?: ToolState[];
-  currentModel?: any;
+  currentModel?: AIModel;
   onConfigChange?: (config: ToolsConfig) => void;
   toolsConfig?: ToolsConfig;
 }
@@ -83,14 +84,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     console.log("Drawing saved:", imageData);
     // TODO: Handle drawing attachment
     // For now, we'll add a placeholder message
-    setMessage(prev => prev + (prev ? "\n\n" : "") + "[Drawing attached]");
+    setMessage((prev) => prev + (prev ? "\n\n" : "") + "[Drawing attached]");
   };
 
   const handleAudioSave = (audioBlob: Blob) => {
     console.log("Audio saved:", audioBlob);
     // TODO: Handle audio attachment
     // For now, we'll add a placeholder message
-    setMessage(prev => prev + (prev ? "\n\n" : "") + "[Audio recording attached]");
+    setMessage(
+      (prev) => prev + (prev ? "\n\n" : "") + "[Audio recording attached]"
+    );
   };
 
   return (
@@ -202,8 +205,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
           {/* Tool selection badges */}
           {toolStates && toggleTool && toolStates.length > 0 && (
-            <ToolsBar 
-              toolStates={toolStates} 
+            <ToolsBar
+              toolStates={toolStates}
               toggleTool={toggleTool}
               onOpenConfig={() => setConfigModalOpen(true)}
             />

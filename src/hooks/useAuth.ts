@@ -85,6 +85,7 @@ export const useAuth = () => {
     error: store.error,
     isInitialized: store.isInitialized,
     isOnline,
+    session: store.session,
 
     // Actions
     login: store.login,
