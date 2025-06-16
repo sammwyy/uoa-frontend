@@ -1,11 +1,11 @@
 import { Bot, Copy, ThumbsDown, ThumbsUp, User } from "lucide-react";
 import React from "react";
 
-import { Message } from "@/types";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { usePreferences } from "@/hooks/usePreferences";
+import { Message } from "@/lib/graphql";
+import { MessageSkeleton } from "../ui/Skeleton";
 import { MessageRenderer } from "./MessageRenderer";
 import { TTSButton } from "./TTSButton";
-import { MessageSkeleton } from "../ui/Skeleton";
 
 interface ChatAreaProps {
   messages: Message[];
@@ -13,7 +13,7 @@ interface ChatAreaProps {
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
-  const { preferences } = useUserPreferences();
+  const { preferences } = usePreferences();
 
   const copyMessage = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -127,9 +127,11 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
 
             {/* Timestamp */}
             {preferences.showTimestamps && message.createdAt && (
-              <div className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${
-                message.role === "user" ? "text-right" : "text-left"
-              }`}>
+              <div
+                className={`text-xs text-gray-500 dark:text-gray-400 mt-1 ${
+                  message.role === "user" ? "text-right" : "text-left"
+                }`}
+              >
                 {formatTimestamp(message.createdAt)}
               </div>
             )}
@@ -143,13 +145,13 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
                 >
                   <Copy className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
-                
+
                 {/* TTS Button */}
-                <TTSButton 
+                <TTSButton
                   text={getMessageTextContent(message)}
                   className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
                 />
-                
+
                 <button
                   className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-green-600 transition-colors"
                   title="Good response"

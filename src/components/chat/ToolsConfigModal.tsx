@@ -1,12 +1,11 @@
-import { Bot, Key, Settings, Sliders, Thermometer } from "lucide-react";
+import { Bot, Key, Sliders, Thermometer } from "lucide-react";
 import React, { useState } from "react";
 
 import { useApiKeys } from "@/hooks/useApiKeys";
 import { useModels } from "@/hooks/useModels";
-import { AIModel, ApiKey } from "@/types/graphql";
+import { AIModel } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
-import { Input } from "../ui/Input";
 import { Modal } from "../ui/Modal";
 import { Slider } from "../ui/Slider";
 
@@ -44,7 +43,10 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
     (key) => key.provider.toLowerCase() === currentModel?.provider.toLowerCase()
   );
 
-  const handleConfigChange = (key: keyof ToolsConfig, value: number | string) => {
+  const handleConfigChange = (
+    key: keyof ToolsConfig,
+    value: number | string
+  ) => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
   };
@@ -74,7 +76,12 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md" title="Tools Configuration">
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      size="md"
+      title="Tools Configuration"
+    >
       <div className="space-y-6">
         {/* Current Model Info */}
         {currentModel && (
@@ -154,16 +161,20 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
               API Key
             </h3>
           </div>
-          
+
           {compatibleApiKeys.length > 0 ? (
             <Dropdown
               options={[
-                { value: "", label: "Use default", description: "System default API key" },
+                {
+                  value: "",
+                  label: "Use default",
+                  description: "System default API key",
+                },
                 ...compatibleApiKeys.map((key) => ({
                   value: key._id,
                   label: key.alias,
                   description: `${key.provider} • Last used: ${
-                    key.lastUsed 
+                    key.lastUsed
                       ? new Date(key.lastUsed).toLocaleDateString()
                       : "Never"
                   }`,
@@ -171,13 +182,15 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
                 })),
               ]}
               value={config.apiKeyId || ""}
-              onSelect={(value) => handleConfigChange("apiKeyId", value || undefined)}
+              onSelect={(value) =>
+                handleConfigChange("apiKeyId", value || undefined)
+              }
               placeholder="Select API key..."
             />
           ) : (
             <div className="p-3 bg-yellow-50/80 dark:bg-yellow-900/20 rounded-lg border border-yellow-200/50 dark:border-yellow-700/50">
               <p className="text-yellow-800 dark:text-yellow-200 text-sm">
-                No API keys found for {currentModel?.provider}. 
+                No API keys found for {currentModel?.provider}.
                 <br />
                 Add an API key in Settings to use custom configurations.
               </p>
@@ -187,25 +200,13 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
 
         {/* Actions */}
         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            variant="secondary"
-            onClick={handleReset}
-            className="flex-1"
-          >
+          <Button variant="secondary" onClick={handleReset} className="flex-1">
             Reset to Defaults
           </Button>
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="flex-1"
-          >
+          <Button variant="secondary" onClick={onClose} className="flex-1">
             Cancel
           </Button>
-          <Button
-            variant="primary"
-            onClick={handleSave}
-            className="flex-1"
-          >
+          <Button variant="primary" onClick={handleSave} className="flex-1">
             Apply Settings
           </Button>
         </div>
@@ -216,10 +217,14 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
             <strong>Configuration Tips:</strong>
           </p>
           <ul className="space-y-1 list-disc list-inside">
-            <li>Lower temperature (0.1-0.3) for factual, consistent responses</li>
+            <li>
+              Lower temperature (0.1-0.3) for factual, consistent responses
+            </li>
             <li>Higher temperature (0.8-1.2) for creative, varied responses</li>
             <li>Increase max tokens for longer, more detailed responses</li>
-            <li>Custom API keys allow you to use your own rate limits and billing</li>
+            <li>
+              Custom API keys allow you to use your own rate limits and billing
+            </li>
           </ul>
         </div>
       </div>

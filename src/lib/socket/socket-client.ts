@@ -50,6 +50,7 @@ class SocketManager {
           auth: {
             token: tokens.accessToken,
           },
+          transports: ["websocket"],
           reconnection: true,
           reconnectionDelay: 1000,
           reconnectionDelayMax: 5000,
@@ -83,6 +84,17 @@ class SocketManager {
     this.socket.on("disconnect", (reason) => {
       logger.warn("Socket disconnected:", reason);
       this.isConnecting = false;
+    });
+
+    this.socket.on("auth_error", (error) => {
+      logger.error("Socket authentication error:", error);
+      this.isConnecting = false;
+    });
+
+    this.socket.on("auth_success", () => {
+      logger.info("Socket authentication successful");
+      this.isConnecting = false;
+      this.reconnectAttempts = 0;
     });
 
     this.socket.on("connect_error", (error) => {

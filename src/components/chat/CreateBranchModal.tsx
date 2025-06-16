@@ -1,10 +1,10 @@
 import { GitBranch, Plus } from "lucide-react";
 import React, { useState } from "react";
 
-import { useMutation } from "@apollo/client";
 import { CREATE_BRANCH_MUTATION } from "@/lib/apollo/queries";
+import { ChatBranch } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
-import { ChatBranch } from "@/types/graphql";
+import { useMutation } from "@apollo/client";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Modal } from "../ui/Modal";
@@ -25,7 +25,7 @@ export const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
   onBranchCreated,
 }) => {
   const [createBranchMutation] = useMutation(CREATE_BRANCH_MUTATION);
-  
+
   const [branchName, setBranchName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +104,8 @@ export const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
               </span>
             </div>
             <p className="text-sm text-primary-700 dark:text-primary-300">
-              {currentBranch.messageCount} messages • Branch point: {currentBranch.branchPoint}
+              {currentBranch.messageCount} messages • Branch point:{" "}
+              {currentBranch.branchPoint}
             </p>
           </div>
         )}
@@ -155,8 +156,9 @@ export const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
             <strong>What is branching?</strong>
           </p>
           <p>
-            Branching allows you to explore different conversation paths from the same point. 
-            You can switch between branches to compare different AI responses or conversation directions.
+            Branching allows you to explore different conversation paths from
+            the same point. You can switch between branches to compare different
+            AI responses or conversation directions.
           </p>
         </div>
       </div>

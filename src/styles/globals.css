@@ -748,7 +748,7 @@
   --bg-selected-hover: 50 80 70;
 }
 
-/* Animation classes for smooth animations preference */
+/* Animation classes for smooth animations preference (To-do) */
 .smooth-animations-enabled * {
   transition-property: all;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);

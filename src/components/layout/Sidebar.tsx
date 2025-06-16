@@ -1,12 +1,18 @@
-import { Archive, MessageSquare, Pin, Plus, Settings, Trash2 } from "lucide-react";
+import {
+  Archive,
+  MessageSquare,
+  Pin,
+  Plus,
+  Settings,
+  Trash2,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { useChats } from "@/hooks/useChats";
+import { Chat } from "@/lib/graphql";
 import { useSidebarStore } from "@/stores/sidebar-store";
-import { Chat } from "@/types";
-import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../ui/Button";
-import { Card } from "../ui/Card";
 import { ChatListSkeleton } from "../ui/Skeleton";
 
 interface SidebarProps {
@@ -19,17 +25,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
   const params = useParams();
   const navigate = useNavigate();
   const { chats, loadChats, isLoading, updateChat } = useChats();
-  const { isOpen, toggle } = useSidebarStore();
+  const { isOpen: showSidebar, toggle: toggleSidebar } = useSidebarStore();
   const chatId = params.chatId;
 
   const [activeFilter, setActiveFilter] = useState<FilterType>("all");
 
   useEffect(() => {
-    if (isOpen && chats.length == 0) {
+    if (showSidebar && chats.length == 0) {
       loadChats();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [showSidebar]);
 
   const onSelectChat = (chat: Chat) => {
     navigate(`/c/${chat._id}`);
@@ -44,13 +50,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
     console.log("Delete chat:", chatId);
   };
 
-  const handlePinToggle = (chat: Chat, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handlePinToggle = (chat: Chat, e: React.MouseEvent | undefined) => {
+    e?.stopPropagation();
     updateChat(chat._id, { pinned: !chat.pinned });
   };
 
-  const handleArchiveToggle = (chat: Chat, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleArchiveToggle = (chat: Chat, e: React.MouseEvent | undefined) => {
+    e?.stopPropagation();
     updateChat(chat._id, { archived: !chat.archived });
   };
 
@@ -71,47 +77,55 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
   const sortedChats = [...filteredChats].sort((a, b) => {
     // If we're not in "all" filter, don't apply pinned sorting
     if (activeFilter !== "all") {
-      return new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime();
+      return (
+        new Date(b.lastActivityAt).getTime() -
+        new Date(a.lastActivityAt).getTime()
+      );
     }
-    
+
     // In "all" filter: pinned first, then by activity
     if (a.pinned && !b.pinned) return -1;
     if (!a.pinned && b.pinned) return 1;
-    return new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime();
+    return (
+      new Date(b.lastActivityAt).getTime() -
+      new Date(a.lastActivityAt).getTime()
+    );
   });
 
   const getFilterCount = (filter: FilterType) => {
     switch (filter) {
       case "pinned":
-        return chats.filter(c => c.pinned && !c.archived).length;
+        return chats.filter((c) => c.pinned && !c.archived).length;
       case "archived":
-        return chats.filter(c => c.archived).length;
+        return chats.filter((c) => c.archived).length;
       case "all":
       default:
-        return chats.filter(c => !c.archived).length;
+        return chats.filter((c) => !c.archived).length;
     }
   };
 
   return (
     <>
       {/* Mobile overlay */}
-      {isOpen && (
+      {showSidebar && (
         <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={toggle}
+          onClick={toggleSidebar}
         />
       )}
 
       {/* Sidebar */}
       <div
         className={`
-        fixed top-0 left-0 h-full w-80 z-50 
+        fixed top-0 left-0 h-full w-72 z-50 
         ${
-          isOpen ? "bg-theme-bg-surface/95 lg:bg-transparent" : "bg-transparent"
+          showSidebar
+            ? "bg-theme-bg-surface/95 lg:bg-transparent"
+            : "bg-transparent"
         } 
         backdrop-blur-md border-r border-white/20 dark:border-gray-700/30
         transform transition-all duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "-translate-x-full"}
+        ${showSidebar ? "translate-x-0" : "-translate-x-full"}
         flex flex-col
       `}
       >
@@ -147,12 +161,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
               }`}
             >
               <MessageSquare className="w-4 h-4" />
-              <span>All</span>
               <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
                 {getFilterCount("all")}
               </span>
             </button>
-            
+
             <button
               onClick={() => setActiveFilter("pinned")}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
@@ -162,12 +175,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
               }`}
             >
               <Pin className="w-4 h-4" />
-              <span>Pinned</span>
               <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
                 {getFilterCount("pinned")}
               </span>
             </button>
-            
+
             <button
               onClick={() => setActiveFilter("archived")}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
@@ -177,7 +189,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
               }`}
             >
               <Archive className="w-4 h-4" />
-              <span>Archived</span>
               <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
                 {getFilterCount("archived")}
               </span>
@@ -186,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
         </div>
 
         {/* Chat List */}
-        <div className="flex-1 overflow-y-auto px-6 pb-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-6">
           {isLoading ? (
             <ChatListSkeleton count={8} />
           ) : sortedChats.length === 0 ? (
@@ -201,38 +212,41 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
               {activeFilter === "pinned" && (
                 <>
                   <p className="text-lg font-medium">No pinned chats</p>
-                  <p className="text-sm mt-2">Pin important conversations to keep them at the top</p>
+                  <p className="text-sm mt-2">
+                    Pin important conversations to keep them at the top
+                  </p>
                 </>
               )}
               {activeFilter === "archived" && (
                 <>
                   <p className="text-lg font-medium">No archived chats</p>
-                  <p className="text-sm mt-2">Archive old conversations to keep your sidebar clean</p>
+                  <p className="text-sm mt-2">
+                    Archive old conversations to keep your sidebar clean
+                  </p>
                 </>
               )}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1">
+              {/* Chat Cards */}
               {sortedChats.map((chat) => (
-                <Card
+                <div
                   key={chat._id}
-                  variant={chatId === chat._id ? "default" : "glass"}
-                  padding="none"
                   onClick={() => onSelectChat(chat)}
-                  className={`group cursor-pointer py-2 px-3 relative ${
+                  className={`bg-theme-bg-card/70 backdrop-blur-md border border-white/30 dark:border-gray-600/30 hover:bg-theme-bg-card/90 rounded-xl transition-all duration-200 group cursor-pointer py-1 px-3 relative ${
                     chatId === chat._id
                       ? "bg-theme-bg-selected border-primary-200/50 dark:border-primary-700/50"
                       : ""
                   }`}
                 >
-                  <div className="flex items-start justify-between">
+                  <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0 pr-2">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2">
                         {/* Pin indicator */}
                         {chat.pinned && activeFilter === "all" && (
                           <Pin className="w-3 h-3 text-primary-500 flex-shrink-0" />
                         )}
-                        
+
                         <span
                           className={`font-semibold truncate text-sm ${
                             chatId === chat._id
@@ -243,12 +257,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
                           {chat.title}
                         </span>
                       </div>
-                      
+
                       {/* Chat metadata */}
                       <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        <span>
-                          {new Date(chat.lastActivityAt).toLocaleDateString()}
-                        </span>
                         {chat.isPublic && (
                           <span className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full text-xs">
                             Public
@@ -272,7 +283,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
                         }`}
                         title={chat.pinned ? "Unpin chat" : "Pin chat"}
                       />
-                      
+
                       {/* Archive/Unarchive button */}
                       <Button
                         variant="ghost"
@@ -284,9 +295,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
                             ? "text-yellow-500 hover:text-yellow-700"
                             : "text-gray-400 hover:text-gray-600"
                         }`}
-                        title={chat.archived ? "Unarchive chat" : "Archive chat"}
+                        title={
+                          chat.archived ? "Unarchive chat" : "Archive chat"
+                        }
                       />
-                      
+
                       {/* Delete button */}
                       <Button
                         variant="ghost"
@@ -301,7 +314,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
                       />
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
           )}

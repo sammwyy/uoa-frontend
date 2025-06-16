@@ -1,270 +1,215 @@
-/**
- * Zustand store for chat state management
- */
-
 import { create } from "zustand";
+import { subscribeWithSelector } from "zustand/middleware";
 
+import type { Chat, GetManyChatsDto } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { socketManager } from "@/lib/socket/socket-client";
 import { indexedDB } from "@/lib/storage/indexed-db";
-import type { Chat, ChatBranch, Message } from "@/types/graphql";
 
 interface ChatState {
-  // State
+  // Core state
   chats: Chat[];
   currentChat: Chat | null;
-  currentBranches: ChatBranch[];
-  messages: Record<string, Message[]>; // branchId -> messages
   isLoading: boolean;
   error: string | null;
-  hasMoreChats: boolean;
-  hasMoreMessages: Record<string, boolean>; // branchId -> hasMore
+  hasMore: boolean;
+  total: number;
+  isInitialized: boolean;
 
-  // Actions
-  setChats: (chats: Chat[], hasMore?: boolean, append?: boolean) => void;
+  // Pagination state
+  currentParams: GetManyChatsDto;
+
+  // State actions (pure)
+  setChats: (
+    chats: Chat[],
+    hasMore: boolean,
+    total: number,
+    append?: boolean
+  ) => void;
   addChat: (chat: Chat) => void;
   updateChat: (chat: Chat) => void;
   removeChat: (chatId: string) => void;
   setCurrentChat: (chat: Chat | null) => void;
-  setBranches: (branches: ChatBranch[]) => void;
-  setMessages: (
-    branchId: string,
-    messages: Message[],
-    hasMore?: boolean,
-    append?: boolean
-  ) => void;
-  addMessage: (message: Message) => void;
-  updateMessage: (message: Message) => void;
-  removeMessage: (messageId: string, branchId: string) => void;
-  setLoading: (isLoading: boolean) => void;
+  setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
-  syncWithOfflineData: () => Promise<void>;
-  cacheData: () => Promise<void>;
+  setCurrentParams: (params: GetManyChatsDto) => void;
+  setInitialized: (initialized: boolean) => void;
+
+  // Offline/cache actions
+  loadFromCache: () => Promise<void>;
+  saveToCache: () => Promise<void>;
+  reset: () => void;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
-  // Initial state
-  chats: [],
-  currentChat: null,
-  currentBranches: [],
-  messages: {},
-  isLoading: false,
-  error: null,
-  hasMoreChats: false,
-  hasMoreMessages: {},
+export const useChatStore = create<ChatState>()(
+  subscribeWithSelector((set, get) => ({
+    // Initial state
+    chats: [],
+    currentChat: null,
+    isLoading: false,
+    error: null,
+    hasMore: false,
+    total: 0,
+    isInitialized: false,
+    currentParams: {},
 
-  // Actions
-  setChats: (chats: Chat[], hasMore = false, append = false) => {
-    set((state) => ({
-      chats: append ? [...state.chats, ...chats] : chats,
-      hasMoreChats: hasMore,
-    }));
+    // Set chats (with optional append for pagination)
+    setChats: (
+      chats: Chat[],
+      hasMore: boolean,
+      total: number,
+      append = false
+    ) => {
+      set((state) => ({
+        chats: append ? [...state.chats, ...chats] : chats,
+        hasMore,
+        total,
+      }));
 
-    // Cache data offline
-    get().cacheData();
-    logger.debug(`Set ${chats.length} chats (append: ${append})`);
-  },
+      logger.debug(
+        `Set ${chats.length} chats (append: ${append}, total: ${total})`
+      );
+    },
 
-  addChat: (chat: Chat) => {
-    set((state) => ({
-      chats: [chat, ...state.chats],
-    }));
+    // Add single chat (for real-time updates)
+    addChat: (chat: Chat) => {
+      set((state) => ({
+        chats: [chat, ...state.chats],
+        total: state.total + 1,
+      }));
 
-    get().cacheData();
-    logger.debug("Added new chat:", chat._id);
-  },
+      logger.debug("Added chat:", chat._id);
+    },
 
-  updateChat: (chat: Chat) => {
-    set((state) => ({
-      chats: state.chats.map((c) => (c._id === chat._id ? chat : c)),
-      currentChat:
-        state.currentChat?._id === chat._id ? chat : state.currentChat,
-    }));
+    // Update existing chat
+    updateChat: (chat: Chat) => {
+      set((state) => ({
+        chats: state.chats.map((c) => (c._id === chat._id ? chat : c)),
+        currentChat:
+          state.currentChat?._id === chat._id ? chat : state.currentChat,
+      }));
 
-    get().cacheData();
-    logger.debug("Updated chat:", chat._id);
-  },
+      logger.debug("Updated chat:", chat._id);
+    },
 
-  removeChat: (chatId: string) => {
-    set((state) => ({
-      chats: state.chats.filter((c) => c._id !== chatId),
-      currentChat: state.currentChat?._id === chatId ? null : state.currentChat,
-      messages: Object.fromEntries(
-        Object.entries(state.messages).filter(([branchId]) => {
-          // Remove messages for branches belonging to this chat
-          return !state.currentBranches.some((b) => b._id === branchId);
-        })
-      ),
-    }));
+    // Remove chat
+    removeChat: (chatId: string) => {
+      set((state) => ({
+        chats: state.chats.filter((c) => c._id !== chatId),
+        currentChat:
+          state.currentChat?._id === chatId ? null : state.currentChat,
+        total: Math.max(0, state.total - 1),
+      }));
 
-    get().cacheData();
-    logger.debug("Removed chat:", chatId);
-  },
+      logger.debug("Removed chat:", chatId);
+    },
 
-  setCurrentChat: (chat: Chat | null) => {
-    set({ currentChat: chat });
-    logger.debug("Set current chat:", chat?._id);
-  },
+    // Set current active chat
+    setCurrentChat: (chat: Chat | null) => {
+      set({ currentChat: chat });
+      logger.debug("Set current chat:", chat?._id);
+    },
 
-  setBranches: (branches: ChatBranch[]) => {
-    set({ currentBranches: branches });
-    logger.debug(`Set ${branches.length} branches`);
-  },
+    // Loading state
+    setLoading: (isLoading: boolean) => {
+      set({ isLoading });
+    },
 
-  setMessages: (
-    branchId: string,
-    messages: Message[],
-    hasMore = false,
-    append = false
-  ) => {
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [branchId]: append
-          ? [...(state.messages[branchId] || []), ...messages]
-          : messages,
-      },
-      hasMoreMessages: {
-        ...state.hasMoreMessages,
-        [branchId]: hasMore,
-      },
-    }));
-
-    // Cache messages offline
-    indexedDB.storeMessages(messages).catch((error) => {
-      logger.error("Failed to cache messages:", error);
-    });
-
-    logger.debug(
-      `Set ${messages.length} messages for branch ${branchId} (append: ${append})`
-    );
-  },
-
-  addMessage: (message: Message) => {
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [message.branchId]: [
-          ...(state.messages[message.branchId] || []),
-          message,
-        ],
-      },
-    }));
-
-    // Cache single message
-    indexedDB.storeMessages([message]).catch((error) => {
-      logger.error("Failed to cache message:", error);
-    });
-
-    logger.debug("Added new message:", message._id);
-  },
-
-  updateMessage: (message: Message) => {
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [message.branchId]: (state.messages[message.branchId] || []).map((m) =>
-          m._id === message._id ? message : m
-        ),
-      },
-    }));
-
-    indexedDB.storeMessages([message]).catch((error) => {
-      logger.error("Failed to cache updated message:", error);
-    });
-
-    logger.debug("Updated message:", message._id);
-  },
-
-  removeMessage: (messageId: string, branchId: string) => {
-    set((state) => ({
-      messages: {
-        ...state.messages,
-        [branchId]: (state.messages[branchId] || []).filter(
-          (m) => m._id !== messageId
-        ),
-      },
-    }));
-
-    logger.debug("Removed message:", messageId);
-  },
-
-  setLoading: (isLoading: boolean) => {
-    set({ isLoading });
-  },
-
-  setError: (error: string | null) => {
-    set({ error });
-    if (error) {
-      logger.error("Chat store error:", error);
-    }
-  },
-
-  clearError: () => {
-    set({ error: null });
-  },
-
-  syncWithOfflineData: async () => {
-    try {
-      const offlineChats = await indexedDB.getChats();
-
-      if (offlineChats.length > 0) {
-        set(() => ({
-          chats: offlineChats,
-          hasMoreChats: false,
-        }));
-
-        logger.info(`Loaded ${offlineChats.length} chats from offline storage`);
+    // Error state
+    setError: (error: string | null) => {
+      set({ error });
+      if (error) {
+        logger.error("Chat store error:", error);
       }
-    } catch (error) {
-      logger.error("Failed to sync with offline data:", error);
-    }
-  },
+    },
 
-  cacheData: async () => {
-    try {
-      const state = get();
-      if (state.chats.length > 0) {
-        await indexedDB.storeChats(state.chats);
+    // Clear error
+    clearError: () => {
+      set({ error: null });
+    },
+
+    // Set current query parameters (for pagination tracking)
+    setCurrentParams: (params: GetManyChatsDto) => {
+      set({ currentParams: params });
+    },
+
+    // Set initialization state
+    setInitialized: (initialized: boolean) => {
+      set({ isInitialized: initialized });
+    },
+
+    // Load chats from offline cache
+    loadFromCache: async () => {
+      try {
+        const offlineChats = await indexedDB.getChats();
+
+        if (offlineChats.length > 0) {
+          set({
+            chats: offlineChats,
+            hasMore: false,
+            total: offlineChats.length,
+            isInitialized: true,
+          });
+
+          logger.info(`Loaded ${offlineChats.length} chats from cache`);
+        } else {
+          set({ isInitialized: true });
+        }
+      } catch (error) {
+        logger.error("Failed to load from cache:", error);
+        set({
+          error: "Failed to load offline data",
+          isInitialized: true,
+        });
       }
-    } catch (error) {
-      logger.error("Failed to cache chat data:", error);
-    }
-  },
-}));
+    },
 
-// Setup socket listeners for chat events
+    // Save current chats to cache
+    saveToCache: async () => {
+      try {
+        const { chats } = get();
+        if (chats.length > 0) {
+          await indexedDB.storeChats(chats);
+          logger.debug(`Cached ${chats.length} chats`);
+        }
+      } catch (error) {
+        logger.error("Failed to save to cache:", error);
+      }
+    },
+
+    // Reset store to initial state
+    reset: () => {
+      set({
+        chats: [],
+        currentChat: null,
+        isLoading: false,
+        error: null,
+        hasMore: false,
+        total: 0,
+        isInitialized: false,
+        currentParams: {},
+      });
+
+      logger.debug("Chat store reset");
+    },
+  }))
+);
+
+// Socket event listeners for real-time updates
 socketManager.setListeners({
   "chat:created": (chat: Chat) => {
     const { addChat } = useChatStore.getState();
     addChat(chat);
   },
+
   "chat:updated": (chat: Chat) => {
     const { updateChat } = useChatStore.getState();
     updateChat(chat);
   },
+
   "chat:deleted": (chatId: string) => {
     const { removeChat } = useChatStore.getState();
     removeChat(chatId);
-  },
-  "message:new": (message: Message) => {
-    const { addMessage } = useChatStore.getState();
-    addMessage(message);
-  },
-  "message:updated": (message: Message) => {
-    const { updateMessage } = useChatStore.getState();
-    updateMessage(message);
-  },
-  "message:deleted": (messageId: string) => {
-    const { messages, removeMessage } = useChatStore.getState();
-
-    // Find the branch containing this message
-    for (const [branchId, branchMessages] of Object.entries(messages)) {
-      if (branchMessages.some((m) => m._id === messageId)) {
-        removeMessage(messageId, branchId);
-        break;
-      }
-    }
   },
 });

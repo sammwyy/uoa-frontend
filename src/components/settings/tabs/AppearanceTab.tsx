@@ -2,10 +2,20 @@ import { Moon, Sun } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
 import { Switch } from "@/components/ui/Switch";
+import { usePreferences } from "@/hooks/usePreferences";
 import { useTheme } from "@/hooks/useTheme";
+import { useSidebarStore } from "@/stores/sidebar-store";
 
 interface ThemeOption {
-  id: "default" | "deep" | "wind" | "candy" | "shad" | "yellow" | "purple" | "aqua";
+  id:
+    | "default"
+    | "deep"
+    | "wind"
+    | "candy"
+    | "shad"
+    | "yellow"
+    | "purple"
+    | "aqua";
   name: string;
   description: string;
   colors: {
@@ -90,8 +100,15 @@ const themeOptions: ThemeOption[] = [
 ];
 
 export function AppearanceTab() {
-  const { baseTheme, toggleBaseTheme, setAccentTheme, accentTheme } =
-    useTheme();
+  const { baseTheme, toggleBaseTheme, accentTheme } = useTheme();
+  const { updatePreference, isLoading, preferences } = usePreferences();
+  const { isOpen: showSidebar, toggle: toggleSidebar } = useSidebarStore();
+
+  const setAccentTheme = (themeId: string) => {
+    if (themeId !== accentTheme) {
+      updatePreference("theme", themeId);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -211,22 +228,18 @@ export function AppearanceTab() {
         </h3>
         <div className="space-y-4">
           <Switch
-            checked={false}
-            onChange={() => {}}
-            label="Compact Mode"
-            description="Reduce spacing and padding throughout the interface"
-          />
-          <Switch
-            checked={true}
-            onChange={() => {}}
+            checked={preferences.showTimestamps}
+            onChange={(checked) => updatePreference("showTimestamps", checked)}
+            disabled={isLoading}
             label="Show Timestamps"
             description="Display message timestamps in conversations"
           />
           <Switch
-            checked={false}
-            onChange={() => {}}
-            label="Smooth Animations"
-            description="Enable smooth transitions and micro-interactions"
+            checked={showSidebar}
+            onChange={toggleSidebar}
+            disabled={isLoading}
+            label="Show Sidebar"
+            description="Display the sidebar with chat history and navigation"
           />
         </div>
       </div>

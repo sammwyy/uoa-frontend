@@ -1,3 +1,4 @@
+import { useMutation } from "@apollo/client";
 import {
   AlertCircle,
   ArrowRight,
@@ -11,18 +12,25 @@ import {
 import React, { useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { PasswordInput } from "@/components/ui/PasswordInput";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
-import { Button } from "../components/ui/Button";
-import { Input } from "../components/ui/Input";
-import { PasswordInput } from "../components/ui/PasswordInput";
+import { LOGIN_MUTATION, REGISTER_MUTATION } from "@/lib/apollo/queries";
+import type { LoginDTO, RegisterDto } from "@/lib/graphql";
+import { logger } from "@/lib/logger";
 
 type AuthMode = "login" | "register";
 
 export const AuthView: React.FC = () => {
-  const { login, register, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, isOnline } = useAuth();
   const { baseTheme, toggleBaseTheme } = useTheme();
   const location = useLocation();
+
+  // GraphQL mutations
+  const [loginMutation] = useMutation(LOGIN_MUTATION);
+  const [registerMutation] = useMutation(REGISTER_MUTATION);
 
   const [mode, setMode] = useState<AuthMode>("login");
   const [formData, setFormData] = useState({
@@ -73,22 +81,94 @@ export const AuthView: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleLogin = async (credentials: LoginDTO) => {
+    try {
+      logger.info("Attempting login", { email: credentials.email });
+
+      const { data } = await loginMutation({
+        variables: { payload: credentials },
+        errorPolicy: "none",
+      });
+
+      if (!data?.login) {
+        throw new Error("Login failed: No session data returned");
+      }
+
+      // Call the hook with session data
+      login(
+        {
+          accessToken: data.login.accessToken,
+          refreshToken: data.login.refreshToken,
+          decryptKey: data.login.rawDecryptKey,
+        },
+        data.login.user
+      );
+
+      logger.info("Login successful", { userId: data.login.user?._id });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Login failed";
+      logger.error("Login failed:", error);
+      throw new Error(errorMessage);
+    }
+  };
+
+  const handleRegister = async (userData: RegisterDto) => {
+    try {
+      logger.info("Attempting registration", { email: userData.email });
+
+      const { data } = await registerMutation({
+        variables: { payload: userData },
+        errorPolicy: "none",
+      });
+
+      if (!data?.register) {
+        throw new Error("Registration failed: No session data returned");
+      }
+
+      // Call the hook with session data
+      login(
+        {
+          accessToken: data.register.accessToken,
+          refreshToken: data.register.refreshToken,
+          decryptKey: data.register.rawDecryptKey,
+        },
+        data.register.user
+      );
+
+      logger.info("Registration successful", {
+        userId: data.register.user?._id,
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Registration failed";
+      logger.error("Registration failed:", error);
+      throw new Error(errorMessage);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateForm()) return;
+
+    // Check connection
+    if (!isOnline) {
+      setErrors({ submit: "Cannot authenticate while offline" });
+      return;
+    }
 
     setIsSubmitting(true);
     setErrors({});
 
     try {
       if (mode === "login") {
-        await login({
+        await handleLogin({
           email: formData.email,
           password: formData.password,
         });
       } else {
-        await register({
+        await handleRegister({
           displayName: formData.name,
           email: formData.email,
           password: formData.password,
@@ -154,8 +234,25 @@ export const AuthView: React.FC = () => {
 
           {/* Auth Form */}
           <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 dark:border-gray-700/30 p-8">
+            {/* Offline warning */}
+            {!isOnline && (
+              <div className="mb-6 p-4 bg-amber-50/80 dark:bg-amber-900/20 rounded-xl border border-amber-200/50 dark:border-amber-700/50">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-1">
+                      No Connection
+                    </h4>
+                    <p className="text-sm text-amber-700 dark:text-amber-300">
+                      You need an internet connection to sign in or register.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Demo credentials info */}
-            {mode === "login" && (
+            {mode === "login" && isOnline && (
               <div className="mb-6 p-4 bg-blue-50/80 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
@@ -200,7 +297,7 @@ export const AuthView: React.FC = () => {
                   icon={User}
                   error={!!errors.name}
                   helperText={errors.name}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !isOnline}
                   autoComplete="name"
                 />
               )}
@@ -215,7 +312,7 @@ export const AuthView: React.FC = () => {
                 icon={Mail}
                 error={!!errors.email}
                 helperText={errors.email}
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isOnline}
                 autoComplete="email"
               />
 
@@ -230,7 +327,7 @@ export const AuthView: React.FC = () => {
                   errors.password ||
                   (mode === "register" ? "Must be at least 6 characters" : "")
                 }
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isOnline}
                 autoComplete={
                   mode === "login" ? "current-password" : "new-password"
                 }
@@ -247,7 +344,7 @@ export const AuthView: React.FC = () => {
                   placeholder="Confirm your password"
                   error={!!errors.confirmPassword}
                   helperText={errors.confirmPassword}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !isOnline}
                   autoComplete="new-password"
                 />
               )}
@@ -257,7 +354,7 @@ export const AuthView: React.FC = () => {
                 type="submit"
                 variant="primary"
                 size="lg"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isOnline}
                 className="w-full"
                 icon={isSubmitting ? undefined : ArrowRight}
                 iconPosition="right"

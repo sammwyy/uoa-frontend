@@ -15,7 +15,7 @@ import {
 import React, { useMemo, useState } from "react";
 
 import { useModels } from "@/hooks/useModels";
-import { AIModel } from "@/types";
+import { AIModel } from "@/lib/graphql";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";

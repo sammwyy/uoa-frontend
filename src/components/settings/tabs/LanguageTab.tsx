@@ -1,8 +1,8 @@
 import { Card } from "@/components/ui/Card";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Switch } from "@/components/ui/Switch";
+import { usePreferences } from "@/hooks/usePreferences";
 import { Clock } from "lucide-react";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 interface LanguageOption {
   value: string;
@@ -64,7 +64,7 @@ const dateFormatOptions: DateFormatOption[] = [
 ];
 
 export function LanguageTab() {
-  const { preferences, updatePreference, isLoading } = useUserPreferences();
+  const { preferences, updatePreference, isLoading } = usePreferences();
 
   return (
     <div className="space-y-6">
@@ -158,7 +158,9 @@ export function LanguageTab() {
         <Card padding="lg" className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">Current Time:</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                Current Time:
+              </span>
               <p className="text-gray-600 dark:text-gray-400">
                 {new Date().toLocaleTimeString(preferences.language, {
                   timeZone: preferences.timezone,
@@ -167,7 +169,9 @@ export function LanguageTab() {
               </p>
             </div>
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">Current Date:</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                Current Date:
+              </span>
               <p className="text-gray-600 dark:text-gray-400">
                 {new Date().toLocaleDateString(preferences.language, {
                   timeZone: preferences.timezone,
@@ -175,13 +179,17 @@ export function LanguageTab() {
               </p>
             </div>
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">Temperature:</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                Temperature:
+              </span>
               <p className="text-gray-600 dark:text-gray-400">
                 {preferences.useMetricUnits ? "22°C" : "72°F"}
               </p>
             </div>
             <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">Distance:</span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">
+                Distance:
+              </span>
               <p className="text-gray-600 dark:text-gray-400">
                 {preferences.useMetricUnits ? "5 km" : "3.1 miles"}
               </p>
@@ -196,8 +204,12 @@ export function LanguageTab() {
           <strong>About Language Settings:</strong>
         </p>
         <ul className="space-y-1 list-disc list-inside">
-          <li>Language settings are synced to your account across all devices</li>
-          <li>Time zone affects how timestamps are displayed in conversations</li>
+          <li>
+            Language settings are synced to your account across all devices
+          </li>
+          <li>
+            Time zone affects how timestamps are displayed in conversations
+          </li>
           <li>Date format applies to all dates shown in the interface</li>
           <li>Regional settings affect units and number formatting</li>
         </ul>

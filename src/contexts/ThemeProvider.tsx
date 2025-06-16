@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 
 import { usePersistentState } from "@/hooks/usePersistentState";
+import { usePreferences } from "@/hooks/usePreferences";
 import { AccentTheme, BaseTheme, ThemeContext } from "@/hooks/useTheme";
 
 const applyTheme = (baseTheme: BaseTheme, accentTheme: AccentTheme) => {
@@ -26,70 +27,19 @@ const applyTheme = (baseTheme: BaseTheme, accentTheme: AccentTheme) => {
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { preferences } = usePreferences();
+
   const [baseTheme, setBaseTheme] = usePersistentState<BaseTheme>(
     "uoa:baseTheme",
     "light"
   );
-  const [accentTheme, setAccentTheme] = usePersistentState<AccentTheme>(
-    "upa:theme",
-    "default"
-  );
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const accentTheme: AccentTheme =
+    (preferences?.theme as AccentTheme) || "default";
 
   // Initialize themes from localStorage
   useEffect(() => {
-    const initializeTheme = async () => {
-      setIsLoading(true);
-
-      try {
-        // Simulate loading time for theme initialization
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        const savedBaseTheme = localStorage.getItem("baseTheme") as BaseTheme;
-        const savedAccentTheme = localStorage.getItem(
-          "accentTheme"
-        ) as AccentTheme;
-
-        const initialBaseTheme = savedBaseTheme || "light";
-        const initialAccentTheme = savedAccentTheme || "default";
-
-        setBaseTheme(initialBaseTheme);
-        setAccentTheme(initialAccentTheme);
-
-        // Apply themes immediately
-        applyTheme(initialBaseTheme, initialAccentTheme);
-      } catch (error) {
-        console.error("Error initializing theme:", error);
-        // Fallback to defaults
-        applyTheme("light", "default");
-      } finally {
-        setIsLoading(false);
-        setIsInitialized(true);
-      }
-    };
-
-    initializeTheme();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Update base theme
-  useEffect(() => {
-    if (isInitialized) {
-      localStorage.setItem("baseTheme", baseTheme);
-      applyTheme(baseTheme, accentTheme);
-    }
-  }, [baseTheme, accentTheme, isInitialized]);
-
-  // Update accent theme
-  const handleSetAccentTheme = (newAccentTheme: AccentTheme) => {
-    setAccentTheme(newAccentTheme);
-    if (isInitialized) {
-      localStorage.setItem("accentTheme", newAccentTheme);
-      applyTheme(baseTheme, newAccentTheme);
-    }
-  };
+    applyTheme(baseTheme, accentTheme);
+  }, [accentTheme, baseTheme]);
 
   const toggleBaseTheme = () => {
     setBaseTheme((prev) => (prev === "light" ? "dark" : "light"));
@@ -100,10 +50,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         baseTheme,
         accentTheme,
-        isLoading,
-        isInitialized,
         toggleBaseTheme,
-        setAccentTheme: handleSetAccentTheme,
       }}
     >
       {children}

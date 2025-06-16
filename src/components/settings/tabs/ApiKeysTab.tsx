@@ -1,12 +1,12 @@
 import { AlertCircle, Check, Key, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
-import { Switch } from "@/components/ui/Switch";
 import { CardSkeleton } from "@/components/ui/Skeleton";
+import { Switch } from "@/components/ui/Switch";
 
 interface APIKeyStatus {
   status: "none" | "valid" | "invalid";
@@ -97,7 +97,7 @@ export function ApiKeysTab() {
   };
 
   // Simulate loading state
-  React.useEffect(() => {
+  useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => setIsLoading(false), 1500);
     return () => clearTimeout(timer);

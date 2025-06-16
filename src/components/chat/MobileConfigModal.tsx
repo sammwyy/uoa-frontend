@@ -2,7 +2,7 @@ import { Bot, Check, Settings, Wrench, X } from "lucide-react";
 import React, { useState } from "react";
 
 import { useTools } from "@/hooks/useTools";
-import { AIModel } from "@/types/graphql";
+import { AIModel } from "@/lib/graphql";
 import { Badge } from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";

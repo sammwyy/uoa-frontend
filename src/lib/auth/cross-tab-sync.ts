@@ -149,6 +149,7 @@ class CrossTabSync {
     onTokenUpdate?: (tokens: {
       accessToken: string;
       refreshToken: string;
+      encryptKey?: string;
     }) => void;
     onLogout?: () => void;
   }): void {

@@ -1,14 +1,23 @@
-import { Bot, Lightbulb, MessageSquare, PenTool, Sparkles } from "lucide-react";
+import {
+  Bot,
+  Lightbulb,
+  Menu,
+  MessageSquare,
+  PenTool,
+  Sparkles,
+} from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ChatInput } from "@/components/chat/ChatInput";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChats";
 import { useModels } from "@/hooks/useModels";
 import { useTools } from "@/hooks/useTools";
 import { Tools } from "@/lib/data/tools";
 import { logger } from "@/lib/logger";
+import { useSidebarStore } from "@/stores/sidebar-store";
 import { Card } from "../components/ui/Card";
 
 const suggestions = [
@@ -16,51 +25,59 @@ const suggestions = [
     icon: "💡",
     title: "Creative Writing",
     description: "Help me write a story about...",
-    prompt: "Help me write a creative story about a time traveler who discovers that changing the past creates parallel universes. I want it to be thought-provoking and include some scientific elements.",
+    prompt:
+      "Help me write a creative story about a time traveler who discovers that changing the past creates parallel universes. I want it to be thought-provoking and include some scientific elements.",
   },
   {
     icon: "🔧",
     title: "Code Review",
     description: "Review my code and suggest improvements",
-    prompt: "I have a React component that's getting complex. Can you review it and suggest ways to make it more maintainable and performant?",
+    prompt:
+      "I have a React component that's getting complex. Can you review it and suggest ways to make it more maintainable and performant?",
   },
   {
     icon: "📚",
     title: "Learning Assistant",
     description: "Explain a complex topic in simple terms",
-    prompt: "Can you explain quantum computing in simple terms? I'm a beginner but I want to understand the basic concepts and potential applications.",
+    prompt:
+      "Can you explain quantum computing in simple terms? I'm a beginner but I want to understand the basic concepts and potential applications.",
   },
   {
     icon: "🎯",
     title: "Problem Solving",
     description: "Help me brainstorm solutions",
-    prompt: "I'm working on improving team productivity in a remote work environment. Can you help me brainstorm innovative solutions and best practices?",
+    prompt:
+      "I'm working on improving team productivity in a remote work environment. Can you help me brainstorm innovative solutions and best practices?",
   },
   {
     icon: "✍️",
     title: "Content Creation",
     description: "Create engaging content for my audience",
-    prompt: "Help me create engaging social media content for a tech startup. I need ideas for posts that showcase our innovation while being accessible to non-technical audiences.",
+    prompt:
+      "Help me create engaging social media content for a tech startup. I need ideas for posts that showcase our innovation while being accessible to non-technical audiences.",
   },
   {
     icon: "🔍",
     title: "Research Assistant",
     description: "Help me research and analyze information",
-    prompt: "I'm researching sustainable energy solutions for urban environments. Can you help me analyze the pros and cons of different technologies and their feasibility?",
+    prompt:
+      "I'm researching sustainable energy solutions for urban environments. Can you help me analyze the pros and cons of different technologies and their feasibility?",
   },
 ];
 
 export const WelcomeView: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
+  const { toggle: toggleSidebar } = useSidebarStore();
   const { createChat, sendMessage } = useChats();
   const { models } = useModels();
   const { toggleTool, toolStates } = useTools(Tools);
+
   const navigate = useNavigate();
 
   const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   // Get default model (first enabled model)
-  const defaultModel = models.find(m => m.enabled) || models[0];
+  const defaultModel = models.find((m) => m.enabled) || models[0];
 
   const handleSendMessage = async (message: string) => {
     if (!isAuthenticated) {
@@ -74,7 +91,7 @@ export const WelcomeView: React.FC = () => {
 
       // Create new chat
       const newChat = await createChat();
-      
+
       if (newChat && newChat.defaultBranch) {
         // Send the message to the new chat
         await sendMessage({
@@ -113,19 +130,30 @@ export const WelcomeView: React.FC = () => {
     <div className="w-full h-[100vh] sm:h-[95vh] bg-chat-container backdrop-blur-md rounded-none sm:rounded-3xl shadow-glass dark:shadow-glass-dark border-0 sm:border border-white/20 dark:border-gray-700/30 relative overflow-hidden">
       {/* Main Content */}
       <div className="h-full overflow-y-auto">
+        <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 p-3 sm:p-4 lg:p-6">
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={Menu}
+            onClick={toggleSidebar}
+            className="p-2 flex-shrink-0"
+            title="Toggle sidebar"
+          />
+        </div>
+
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-12">
           {/* Welcome Header */}
           <div className="text-center space-y-6">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center mx-auto shadow-xl animate-pulse">
               <Bot className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
             </div>
-            
+
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 dark:text-gray-200">
                 {getGreeting()}, {userName}!
               </h1>
               <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                I'm your AI assistant, ready to help with anything you need. 
+                I'm your AI assistant, ready to help with anything you need.
                 What would you like to explore today?
               </p>
             </div>
@@ -138,7 +166,8 @@ export const WelcomeView: React.FC = () => {
                 Popular Starting Points
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                Click any suggestion below to start a conversation, or type your own message
+                Click any suggestion below to start a conversation, or type your
+                own message
               </p>
             </div>
 
@@ -242,23 +271,23 @@ export const WelcomeView: React.FC = () => {
           toggleTool={toggleTool}
           toolStates={toolStates}
           placeholder={
-            isAuthenticated 
+            isAuthenticated
               ? "Ask me anything... (Shift+Enter for new line)"
               : "Sign in to start chatting with AI..."
           }
           disabled={!isAuthenticated}
         />
-        
+
         {!isAuthenticated && (
           <div className="text-center mt-3">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              <button 
+              <button
                 onClick={() => navigate("/auth")}
                 className="text-primary-600 dark:text-primary-400 hover:underline font-medium"
               >
                 Sign in
-              </button>
-              {" "}to start your AI conversation
+              </button>{" "}
+              to start your AI conversation
             </p>
           </div>
         )}

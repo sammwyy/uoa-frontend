@@ -15,9 +15,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useModels } from "@/hooks/useModels";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { AIModel, Chat, ChatBranch, UpdateChatDto } from "@/lib/graphql";
 import { useSidebarStore } from "@/stores/sidebar-store";
-import { AIModel, Chat, ChatBranch, UpdateChatDto } from "../../types/graphql";
 import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
 import { Input } from "../ui/Input";
@@ -64,7 +63,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const { models } = useModels();
   const selectedModel = models.find((m) => m.id === chat?.modelId);
   const { toggle: toggleSidebar } = useSidebarStore();
-  const { preferences } = useUserPreferences();
 
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -135,8 +133,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6">
           {/* Left Section - Sidebar Toggle and Model Selector */}
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-            {/* Sidebar Toggle - Only show if authenticated and sidebar is enabled */}
-            {isAuthenticated && preferences.showSidebar && (
+            {/* Sidebar Toggle - Only show if authenticated */}
+            {isAuthenticated && (
               <Button
                 variant="secondary"
                 size="sm"

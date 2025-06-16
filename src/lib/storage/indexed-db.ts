@@ -3,7 +3,7 @@
  * Handles bulk data caching for chats, messages, and API keys
  */
 
-import type { AIModel, ApiKey, Chat, Message } from "@/types/graphql";
+import type { AIModel, ApiKey, Chat, Message } from "@/lib/graphql";
 import { IDBPDatabase, openDB } from "idb";
 
 import { logger } from "../logger";

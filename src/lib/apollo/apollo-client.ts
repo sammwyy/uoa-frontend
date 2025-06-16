@@ -178,11 +178,11 @@ class ApolloClientManager {
       defaultOptions: {
         watchQuery: {
           errorPolicy: "ignore",
-          fetchPolicy: "cache-and-network",
+          fetchPolicy: "standby",
         },
         query: {
           errorPolicy: "all",
-          fetchPolicy: "cache-first",
+          fetchPolicy: "standby",
         },
       },
     });

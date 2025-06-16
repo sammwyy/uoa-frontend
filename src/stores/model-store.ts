@@ -4,9 +4,9 @@
 
 import { create } from "zustand";
 
+import type { AIModel } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { indexedDB } from "@/lib/storage/indexed-db";
-import type { AIModel } from "@/types/graphql";
 
 interface ModelState {
   // State

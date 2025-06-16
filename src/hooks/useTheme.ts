@@ -1,15 +1,20 @@
 import { createContext, useContext } from "react";
 
 export type BaseTheme = "light" | "dark";
-export type AccentTheme = "default" | "deep" | "wind" | "candy" | "shad" | "yellow" | "purple" | "aqua";
+export type AccentTheme =
+  | "default"
+  | "deep"
+  | "wind"
+  | "candy"
+  | "shad"
+  | "yellow"
+  | "purple"
+  | "aqua";
 
 interface ThemeContextType {
   baseTheme: BaseTheme;
   accentTheme: AccentTheme;
-  isLoading: boolean;
-  isInitialized: boolean;
   toggleBaseTheme: () => void;
-  setAccentTheme: (theme: AccentTheme) => void;
 }
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(

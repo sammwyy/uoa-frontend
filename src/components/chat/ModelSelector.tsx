@@ -1,7 +1,7 @@
 import { Bot, ChevronDown } from "lucide-react";
 import React, { useState } from "react";
 
-import { AIModel } from "@/types/graphql";
+import { AIModel } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { ModelSelectorModal } from "./ModelSelectorModal";
 

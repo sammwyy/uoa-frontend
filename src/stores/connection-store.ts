@@ -55,11 +55,9 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
         lastSeen: new Date(),
         reconnectAttempts: 0,
       });
+    } else {
+      logger.warn(`Socket is Disconnected.`);
     }
-
-    logger.debug(
-      `Socket connection status: ${isConnected ? "connected" : "disconnected"}`
-    );
   },
 
   setLastSeen: (lastSeen: Date) => {

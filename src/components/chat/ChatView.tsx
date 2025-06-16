@@ -5,14 +5,14 @@ import { useTools } from "@/hooks/useTools";
 import { apolloClient } from "@/lib/apollo/apollo-client";
 import { GET_CHAT_MESSAGES_QUERY, GET_CHAT_QUERY } from "@/lib/apollo/queries";
 import { Tools } from "@/lib/data/tools";
-import { logger } from "@/lib/logger";
 import {
   AIModel,
   Chat,
   ChatBranch,
   GetMessagesDto,
   MessagesResponse,
-} from "@/types";
+} from "@/lib/graphql";
+import { logger } from "@/lib/logger";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "../layout/LoadingScreen";
 import { ChatArea } from "./ChatArea";
@@ -167,7 +167,12 @@ export function ChatView({ chatId }: ChatViewProps) {
 
   // Show loading screen while loading chat data
   if (loading && !chat) {
-    return <LoadingScreen message="Loading chat..." submessage="Please wait while we load your conversation" />;
+    return (
+      <LoadingScreen
+        message="Loading chat..."
+        submessage="Please wait while we load your conversation"
+      />
+    );
   }
 
   if (error) {
@@ -180,10 +185,8 @@ export function ChatView({ chatId }: ChatViewProps) {
           <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
             Error Loading Chat
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-md">
-            {error}
-          </p>
-          <button 
+          <p className="text-gray-600 dark:text-gray-400 max-w-md">{error}</p>
+          <button
             onClick={() => loadChat(chatId)}
             className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
           >

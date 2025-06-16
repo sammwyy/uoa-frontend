@@ -1,7 +1,7 @@
 import { GitBranch, Plus } from "lucide-react";
-import React, { useState } from "react";
+import React from "react";
 
-import { ChatBranch } from "@/types/graphql";
+import { ChatBranch } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
 
@@ -42,7 +42,7 @@ export const BranchDropdown: React.FC<BranchDropdownProps> = ({
         disabled={disabled}
         className="min-w-[140px]"
       />
-      
+
       <Button
         variant="ghost"
         size="sm"

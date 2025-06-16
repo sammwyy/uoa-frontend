@@ -3,14 +3,14 @@
  * Handles encryption keys, access tokens, and refresh tokens
  */
 
-import { User } from "@/types/graphql";
+import { User } from "@/lib/graphql";
 import { logger } from "../logger";
 
 export class LocalStorage {
   private static readonly KEYS = {
     ACCESS_TOKEN: "oua:auth:accessToken",
     REFRESH_TOKEN: "oua:auth:refreshToken",
-    ENCRYPT_KEY: "oua:auth:encryptKey",
+    ENCRYPT_KEY: "oua:auth:decryptKey",
     USER_DATA: "oua:auth:userData",
     LAST_SYNC: "oua:app:lastSync",
     PREFERENCES: "oua:app:preferences",
@@ -22,20 +22,17 @@ export class LocalStorage {
   static setAuthTokens(
     accessToken: string,
     refreshToken: string,
-    encryptKey?: string
+    decryptKey: string
   ): void {
     try {
       localStorage.setItem(this.KEYS.ACCESS_TOKEN, accessToken);
       localStorage.setItem(this.KEYS.REFRESH_TOKEN, refreshToken);
-
-      if (encryptKey) {
-        localStorage.setItem(this.KEYS.ENCRYPT_KEY, encryptKey);
-      }
+      localStorage.setItem(this.KEYS.ENCRYPT_KEY, decryptKey);
 
       logger.debug("Auth tokens stored successfully", {
         hasAccessToken: !!accessToken,
         hasRefreshToken: !!refreshToken,
-        hasEncryptKey: !!encryptKey,
+        hasDecryptKey: !!decryptKey,
       });
     } catch (error) {
       logger.error("Failed to store auth tokens:", error);
@@ -49,19 +46,19 @@ export class LocalStorage {
   static getAuthTokens(): {
     accessToken: string | null;
     refreshToken: string | null;
-    encryptKey: string | null;
+    decryptKey: string | null;
   } {
     try {
       const tokens = {
         accessToken: localStorage.getItem(this.KEYS.ACCESS_TOKEN),
         refreshToken: localStorage.getItem(this.KEYS.REFRESH_TOKEN),
-        encryptKey: localStorage.getItem(this.KEYS.ENCRYPT_KEY),
+        decryptKey: localStorage.getItem(this.KEYS.ENCRYPT_KEY),
       };
 
       logger.debug("Retrieved auth tokens from localStorage", {
         hasAccessToken: !!tokens.accessToken,
         hasRefreshToken: !!tokens.refreshToken,
-        hasEncryptKey: !!tokens.encryptKey,
+        hasDecryptKey: !!tokens.decryptKey,
       });
 
       return tokens;
@@ -70,7 +67,7 @@ export class LocalStorage {
       return {
         accessToken: null,
         refreshToken: null,
-        encryptKey: null,
+        decryptKey: null,
       };
     }
   }

@@ -1,241 +1,178 @@
-/**
- * Zustand store for authentication state management
- */
-
 import { create } from "zustand";
+import { subscribeWithSelector } from "zustand/middleware";
 
-import { apolloClientManager } from "@/lib/apollo/apollo-client";
-import { crossTabSync } from "@/lib/auth/cross-tab-sync";
+import type { User } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { socketManager } from "@/lib/socket/socket-client";
 import { LocalStorage } from "@/lib/storage/local-storage";
-import type { SessionResponse, User } from "../types/graphql";
+
+interface AuthSession {
+  accessToken: string;
+  refreshToken: string;
+  decryptKey: string;
+}
 
 interface AuthState {
-  // State
+  // Main state
   isAuthenticated: boolean;
   user: User | null;
-  accessToken: string | null;
-  refreshToken: string | null;
-  encryptKey: string | null;
+  session: AuthSession | null;
   isLoading: boolean;
+  isInitialized: boolean;
   error: string | null;
 
   // Actions
-  setUser: (user: User) => void;
-  setTokens: (
-    accessToken: string,
-    refreshToken: string,
-    encryptKey?: string
-  ) => void;
-  setLoading: (isLoading: boolean) => void;
-  setError: (error: string | null) => void;
-  login: (sessionData: SessionResponse) => void;
+  initialize: () => void;
+  login: (session: AuthSession, user?: User) => void;
   logout: () => void;
-  initializeAuth: () => void;
+  updateUser: (user: User) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set, get) => ({
-  // Initial state
-  isAuthenticated: false,
-  user: null,
-  accessToken: null,
-  refreshToken: null,
-  encryptKey: null,
-  isLoading: false,
-  error: null,
+export const useAuthStore = create<AuthState>()(
+  subscribeWithSelector((set, get) => ({
+    // Initial state
+    isAuthenticated: false,
+    user: null,
+    session: null,
+    isLoading: false,
+    isInitialized: false,
+    error: null,
 
-  // Actions
-  setUser: (user: User) => {
-    set({ user });
-    LocalStorage.setUserData(user);
-    logger.debug("User data updated in store");
-  },
+    // Initialize from localStorage
+    initialize: () => {
+      if (get().isInitialized) return;
 
-  setTokens: (
-    accessToken: string,
-    refreshToken: string,
-    encryptKey?: string
-  ) => {
-    set({
-      accessToken,
-      refreshToken,
-      encryptKey: encryptKey || get().encryptKey,
-      isAuthenticated: true,
-    });
+      try {
+        set({ isLoading: true });
+        logger.info("Initializing auth from localStorage");
 
-    LocalStorage.setAuthTokens(accessToken, refreshToken, encryptKey);
+        const tokens = LocalStorage.getAuthTokens();
+        const userData = LocalStorage.getUserData();
 
-    // Update socket authentication
-    socketManager.updateAuth(accessToken);
+        if (tokens.accessToken && tokens.refreshToken && tokens.decryptKey) {
+          const session: AuthSession = {
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+            decryptKey: tokens.decryptKey,
+          };
 
-    logger.info("Auth tokens updated");
-  },
+          set({
+            isAuthenticated: true,
+            session,
+            user: userData,
+          });
 
-  setLoading: (isLoading: boolean) => {
-    set({ isLoading });
-  },
+          // Configure socket with token
+          socketManager.updateAuth(tokens.accessToken);
+          socketManager.connect();
 
-  setError: (error: string | null) => {
-    set({ error });
-    if (error) {
-      logger.error("Auth error:", error);
-    }
-  },
+          logger.info("Auth initialized from cache", {
+            hasUser: !!userData,
+            userId: userData?._id,
+          });
+        } else {
+          logger.debug("No cached session found");
+        }
+      } catch (error) {
+        logger.error("Failed to initialize auth:", error);
+        set({ error: "Failed to initialize authentication" });
+      } finally {
+        set({ isInitialized: true, isLoading: false });
+      }
+    },
 
-  login: (sessionData: SessionResponse) => {
-    const { accessToken, refreshToken, rawDecryptKey, user } = sessionData;
+    // Login - save session and user
+    login: (session: AuthSession, user?: User) => {
+      try {
+        set({ isLoading: true, error: null });
 
-    set({
-      isAuthenticated: true,
-      user: user || null,
-      accessToken,
-      refreshToken,
-      encryptKey: rawDecryptKey || null,
-      isLoading: false,
-      error: null,
-    });
-
-    // Store tokens in localStorage
-    LocalStorage.setAuthTokens(accessToken, refreshToken, rawDecryptKey);
-
-    if (user) {
-      LocalStorage.setUserData(user);
-    }
-
-    // Connect to socket
-    socketManager.connect();
-
-    logger.info("User logged in successfully");
-  },
-
-  logout: () => {
-    set({
-      isAuthenticated: false,
-      user: null,
-      accessToken: null,
-      refreshToken: null,
-      encryptKey: null,
-      isLoading: false,
-      error: null,
-    });
-
-    // Clear storage
-    LocalStorage.clearAuthData();
-
-    // Disconnect socket
-    socketManager.disconnect();
-
-    // Reset Apollo cache
-    apolloClientManager.resetCache();
-
-    // Broadcast logout to other tabs
-    crossTabSync.broadcastLogout();
-
-    logger.info("User logged out");
-  },
-
-  initializeAuth: () => {
-    try {
-      logger.info("Initializing authentication state...");
-
-      const tokens = LocalStorage.getAuthTokens();
-      const userData = LocalStorage.getUserData();
-
-      logger.debug("Retrieved tokens from localStorage:", {
-        hasAccessToken: !!tokens.accessToken,
-        hasRefreshToken: !!tokens.refreshToken,
-        hasEncryptKey: !!tokens.encryptKey,
-      });
-
-      if (tokens.accessToken && tokens.refreshToken) {
+        // Update state
         set({
           isAuthenticated: true,
-          user: userData,
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-          encryptKey: tokens.encryptKey,
-          isLoading: false,
-          error: null,
+          session,
+          user: user || null,
         });
 
-        // Connect to socket
+        // Persist to localStorage
+        LocalStorage.setAuthTokens(
+          session.accessToken,
+          session.refreshToken,
+          session.decryptKey
+        );
+
+        if (user) {
+          LocalStorage.setUserData(user);
+        }
+
+        // Configure socket
+        socketManager.updateAuth(session.accessToken);
         socketManager.connect();
 
-        logger.info("Auth state initialized from localStorage", {
-          userId: userData?._id,
-          userEmail: userData?.email,
-        });
-      } else {
-        logger.debug("No stored auth tokens found, user needs to login");
+        logger.info("Login successful", { userId: user?._id });
+      } catch (error) {
+        logger.error("Login failed:", error);
+        set({ error: "Login failed" });
+      } finally {
+        set({ isLoading: false });
+      }
+    },
+
+    // Logout - clear everything
+    logout: async () => {
+      try {
+        set({ isLoading: true });
+
+        // Clear state
         set({
           isAuthenticated: false,
           user: null,
-          accessToken: null,
-          refreshToken: null,
-          encryptKey: null,
-          isLoading: false,
+          session: null,
           error: null,
         });
+
+        // Clear localStorage
+        await LocalStorage.clearAuthData();
+
+        // Disconnect socket
+        socketManager.disconnect();
+
+        logger.info("Logout successful");
+      } catch (error) {
+        logger.error("Logout failed:", error);
+      } finally {
+        set({ isLoading: false });
       }
-    } catch (error) {
-      logger.error("Failed to initialize auth state:", error);
-      set({
-        isAuthenticated: false,
-        user: null,
-        accessToken: null,
-        refreshToken: null,
-        encryptKey: null,
-        isLoading: false,
-        error: "Failed to initialize authentication",
-      });
-    }
-  },
+    },
 
-  clearError: () => {
-    set({ error: null });
-  },
-}));
+    // Update user (for synchronization)
+    updateUser: (user: User) => {
+      set({ user });
+      LocalStorage.setUserData(user);
+      logger.debug("User updated", { userId: user._id });
+    },
 
-// Initialize auth state immediately when the store is created
-const initializeAuthOnLoad = () => {
-  const { initializeAuth } = useAuthStore.getState();
-  initializeAuth();
-};
+    // Utilities
+    setLoading: (isLoading: boolean) => set({ isLoading }),
+    setError: (error: string | null) => set({ error }),
+    clearError: () => set({ error: null }),
+  }))
+);
 
-// Call initialization after a small delay to ensure localStorage is available
-if (typeof window !== "undefined") {
-  setTimeout(initializeAuthOnLoad, 0);
-}
-
-// Setup cross-tab synchronization
-crossTabSync.setListeners({
-  onTokenUpdate: (tokens) => {
-    const { setTokens } = useAuthStore.getState();
-    setTokens(tokens.accessToken, tokens.refreshToken);
-    logger.info("Tokens updated from cross-tab sync");
-  },
-  onLogout: () => {
-    const { logout } = useAuthStore.getState();
-    logout();
-    logger.info("Logged out from cross-tab sync");
-  },
-});
-
-// Setup socket listeners for auth events
+// Configure socket listeners for synchronization
 socketManager.setListeners({
-  "auth:token_refreshed": (tokens: {
-    accessToken: string;
-    refreshToken: string;
-  }) => {
-    const { setTokens } = useAuthStore.getState();
-    setTokens(tokens.accessToken, tokens.refreshToken);
-    logger.info("Tokens refreshed via socket");
+  "user:updated": (userData: User) => {
+    const { updateUser, isAuthenticated } = useAuthStore.getState();
+    if (isAuthenticated) {
+      updateUser(userData);
+      logger.info("User updated via socket");
+    }
   },
   "auth:logout": () => {
     const { logout } = useAuthStore.getState();
     logout();
-    logger.info("Logged out via socket");
+    logger.info("Logout triggered via socket");
   },
 });

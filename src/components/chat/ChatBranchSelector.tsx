@@ -18,8 +18,8 @@ import {
   DELETE_BRANCH_MUTATION,
   UPDATE_BRANCH_MUTATION,
 } from "@/lib/apollo/queries";
+import type { ChatBranch } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
-import type { ChatBranch } from "@/types/graphql";
 import { useMutation } from "@apollo/client";
 
 interface BranchSelectorProps {

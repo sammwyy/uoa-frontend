@@ -5,9 +5,9 @@
 import { create } from "zustand";
 
 import { socketManager } from "@/lib/socket/socket-client";
+import type { ApiKey } from "../lib/graphql";
 import { logger } from "../lib/logger";
 import { indexedDB } from "../lib/storage/indexed-db";
-import type { ApiKey } from "../types";
 
 interface ApiKeyState {
   // State

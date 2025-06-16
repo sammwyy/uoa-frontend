@@ -9,7 +9,7 @@ import {
 import remarkGfm from "remark-gfm";
 
 import { useTheme } from "@/hooks/useTheme";
-import { MessageRole } from "@/types";
+import { MessageRole } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { ImageModal } from "./ImageModal";
 

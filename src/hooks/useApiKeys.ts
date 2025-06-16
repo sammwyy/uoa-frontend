@@ -11,10 +11,10 @@ import {
   GET_API_KEYS_QUERY,
   UPDATE_API_KEY_MUTATION,
 } from "@/lib/apollo/queries";
+import type { CreateApiKeyDto, UpdateApiKeyDto } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { useApiKeyStore } from "@/stores/api-key-store";
 import { useConnectionStore } from "@/stores/connection-store";
-import type { CreateApiKeyDto, UpdateApiKeyDto } from "@/types/graphql";
 
 export const useApiKeys = () => {
   const {

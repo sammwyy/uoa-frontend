@@ -6,7 +6,7 @@ import { gql } from "@apollo/client";
 
 // Auth mutations
 export const LOGIN_MUTATION = gql`
-  mutation Login($payload: LoginDTO!) {
+  mutation Login($payload: LoginDto!) {
     login(payload: $payload) {
       accessToken
       refreshToken
@@ -18,16 +18,6 @@ export const LOGIN_MUTATION = gql`
         emailVerified
         createdAt
         updatedAt
-        preferences {
-          timezone
-          dateFormat
-          language
-          use24HourFormat
-          useMetricUnits
-          showSidebar
-          showTimestamps
-          smoothAnimations
-        }
       }
     }
   }
@@ -46,16 +36,6 @@ export const REGISTER_MUTATION = gql`
         emailVerified
         createdAt
         updatedAt
-        preferences {
-          timezone
-          dateFormat
-          language
-          use24HourFormat
-          useMetricUnits
-          showSidebar
-          showTimestamps
-          smoothAnimations
-        }
       }
     }
   }
@@ -77,7 +57,7 @@ export const LOGOUT_MUTATION = gql`
 `;
 
 export const UPDATE_PASSWORD_MUTATION = gql`
-  mutation UpdatePassword($payload: ChangePasswordDTO!) {
+  mutation UpdatePassword($payload: ChangePasswordDto!) {
     updatePassword(payload: $payload) {
       _id
       email
@@ -85,16 +65,6 @@ export const UPDATE_PASSWORD_MUTATION = gql`
       emailVerified
       createdAt
       updatedAt
-      preferences {
-        timezone
-        dateFormat
-        language
-        use24HourFormat
-        useMetricUnits
-        showSidebar
-        showTimestamps
-        smoothAnimations
-      }
     }
   }
 `;
@@ -108,16 +78,20 @@ export const UPDATE_USER_MUTATION = gql`
       emailVerified
       createdAt
       updatedAt
-      preferences {
-        timezone
-        dateFormat
-        language
-        use24HourFormat
-        useMetricUnits
-        showSidebar
-        showTimestamps
-        smoothAnimations
-      }
+    }
+  }
+`;
+
+// User queries
+export const GET_USER_QUERY = gql`
+  query GetUser {
+    getUser {
+      _id
+      email
+      displayName
+      emailVerified
+      createdAt
+      updatedAt
     }
   }
 `;
@@ -391,6 +365,35 @@ export const GET_AVAILABLE_MODELS_QUERY = gql`
         fileAnalysis
         webBrowsing
       }
+    }
+  }
+`;
+
+// Preferences
+export const GET_PREFERENCES_QUERY = gql`
+  query GetPreferences {
+    getPreferences {
+      timezone
+      dateFormat
+      language
+      use24HourFormat
+      useMetricUnits
+      showTimestamps
+      theme
+    }
+  }
+`;
+
+export const UPDATE_PREFERENCES_MUTATION = gql`
+  mutation UpdatePreferences($payload: UpdatePreferencesDto!) {
+    updatePreferences(payload: $payload) {
+      timezone
+      dateFormat
+      language
+      use24HourFormat
+      useMetricUnits
+      showTimestamps
+      theme
     }
   }
 `;

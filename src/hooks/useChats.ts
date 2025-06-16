@@ -1,202 +1,175 @@
-/**
- * Hook for chat operations
- */
-
-import { useMutation } from "@apollo/client";
-
-import { apolloClient } from "@/lib/apollo/apollo-client";
 import {
   CREATE_CHAT_MUTATION,
+  DELETE_CHAT_MUTATION,
   GET_CHATS_QUERY,
-  GET_CHAT_MESSAGES_QUERY,
-  GET_CHAT_QUERY,
-  SEND_MESSAGE_MUTATION,
   UPDATE_CHAT_MUTATION,
 } from "@/lib/apollo/queries";
+import type {
+  Chat,
+  ChatsResponse,
+  GetManyChatsDto,
+  UpdateChatDto,
+} from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { useChatStore } from "@/stores/chat-store";
 import { useConnectionStore } from "@/stores/connection-store";
-import type {
-  AddMessageDto,
-  GetManyChatsDto,
-  GetMessagesDto,
-  UpdateChatDto,
-} from "@/types/graphql";
+import { useMutation, useQuery } from "@apollo/client";
+import { useEffect } from "react";
 
 export const useChats = () => {
-  const {
-    chats,
-    currentChat,
-    currentBranches,
-    messages,
-    hasMoreChats,
-    hasMoreMessages,
-    isLoading,
-    error,
-    setChats,
-    setCurrentChat,
-    setBranches,
-    setMessages,
-    setLoading,
-    setError,
-    clearError,
-    syncWithOfflineData,
-    updateChat: updateChatData,
-  } = useChatStore();
-
+  const store = useChatStore();
   const { isOnline } = useConnectionStore();
 
-  const [updateChatMutation] = useMutation(UPDATE_CHAT_MUTATION);
-  const [createChatMutation] = useMutation(CREATE_CHAT_MUTATION);
-  const [sendMessageMutation] = useMutation(SEND_MESSAGE_MUTATION);
+  // Query for loading chats (controlled manually)
+  const { refetch: refetchChats, loading: queryLoading } = useQuery(
+    GET_CHATS_QUERY,
+    {
+      skip: true, // We'll trigger this manually
+      fetchPolicy: isOnline ? "cache-and-network" : "cache-only",
+      errorPolicy: "ignore",
+      notifyOnNetworkStatusChange: false,
+    }
+  );
 
-  // Load chats with offline fallback
+  // Mutations
+  const [createChatMutation] = useMutation(CREATE_CHAT_MUTATION);
+  const [updateChatMutation] = useMutation(UPDATE_CHAT_MUTATION);
+  const [deleteChatMutation] = useMutation(DELETE_CHAT_MUTATION);
+
+  // Initialize store on mount
+  useEffect(() => {
+    if (!store.isInitialized) {
+      store.loadFromCache();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-refetch when connection is restored
+  useEffect(() => {
+    if (isOnline && store.isInitialized && store.chats.length > 0) {
+      logger.info("Connection restored, syncing chats");
+      loadChats(store.currentParams).catch((error) => {
+        logger.warn("Failed to sync chats after reconnection:", error);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, store.isInitialized]);
+
+  // Load chats from server
   const loadChats = async (params: GetManyChatsDto = {}, append = false) => {
     try {
-      setLoading(true);
-      setError(null);
+      store.setLoading(true);
+      store.clearError();
 
+      // If offline, use cache only
       if (!isOnline) {
-        // Load from offline storage when offline
-        await syncWithOfflineData();
+        if (!store.isInitialized) {
+          await store.loadFromCache();
+        }
         return;
+      }
+
+      // Update current params for pagination
+      if (!append) {
+        store.setCurrentParams(params);
       }
 
       logger.info("Loading chats:", params);
 
-      const { data, error: queryError } = await apolloClient.query({
-        query: GET_CHATS_QUERY,
-        variables: { query: params },
-        fetchPolicy: "cache-first",
+      const { data, error } = await refetchChats({
+        query: params,
       });
 
-      if (queryError) {
-        throw queryError;
+      if (error && !data) {
+        throw error;
       }
 
       if (data?.getChats) {
-        const { chats: newChats, hasMore } = data.getChats;
-        setChats(newChats, hasMore, append);
-        logger.info(`Loaded ${newChats.length} chats`);
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to load chats";
-      setError(errorMessage);
-      logger.error("Failed to load chats:", error);
+        const response: ChatsResponse = data.getChats;
 
-      // Fallback to offline data on error
-      if (isOnline) {
-        await syncWithOfflineData();
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+        // Update store
+        store.setChats(
+          response.chats,
+          response.hasMore,
+          response.total,
+          append
+        );
 
-  // Load specific chat with branches
-  const loadChat = async (chatId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
+        // Cache for offline use
+        await store.saveToCache();
 
-      logger.info("Loading chat:", chatId);
-
-      const { data, error: queryError } = await apolloClient.query({
-        query: GET_CHAT_QUERY,
-        variables: { query: { chatId } },
-        fetchPolicy: "cache-first",
-      });
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      if (data?.getChat) {
-        const { chat, branches } = data.getChat;
-        setCurrentChat(chat);
-        setBranches(branches);
-        logger.info(`Loaded chat ${chatId} with ${branches.length} branches`);
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to load chat";
-      setError(errorMessage);
-      logger.error("Failed to load chat:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load messages for a branch
-  const loadMessages = async (params: GetMessagesDto, append = false) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      logger.info("Loading messages for branch:", params.branchId);
-
-      const { data, error: queryError } = await apolloClient.query({
-        query: GET_CHAT_MESSAGES_QUERY,
-        variables: { query: params },
-        fetchPolicy: "cache-first",
-      });
-
-      if (queryError) {
-        throw queryError;
-      }
-
-      if (data?.getChatMessages) {
-        const { messages: newMessages, hasMore } = data.getChatMessages;
-        setMessages(params.branchId, newMessages, hasMore, append);
         logger.info(
-          `Loaded ${newMessages.length} messages for branch ${params.branchId}`
+          `Loaded ${response.chats.length} chats (total: ${response.total})`
         );
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to load messages";
-      setError(errorMessage);
-      logger.error("Failed to load messages:", error);
+        error instanceof Error ? error.message : "Failed to load chats";
+      store.setError(errorMessage);
+      logger.error("Failed to load chats:", error);
+
+      // Fallback to cache if network request failed
+      if (isOnline && !store.isInitialized) {
+        await store.loadFromCache();
+      }
     } finally {
-      setLoading(false);
+      store.setLoading(false);
     }
+  };
+
+  // Load more chats (pagination)
+  const loadMoreChats = async () => {
+    if (!store.hasMore || store.isLoading) {
+      return;
+    }
+
+    const nextParams: GetManyChatsDto = {
+      ...store.currentParams,
+      offset: store.chats.length,
+    };
+
+    await loadChats(nextParams, true);
   };
 
   // Create new chat
   const createChat = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      store.setLoading(true);
+      store.clearError();
 
       logger.info("Creating new chat");
 
       const { data } = await createChatMutation();
 
-      if (data?.createChat) {
-        const newChat = data.createChat;
-        setCurrentChat(newChat);
-        logger.info("Chat created successfully:", newChat._id);
-        return newChat;
-      } else {
+      if (!data?.createChat) {
         throw new Error("Failed to create chat: No data returned");
       }
+
+      const newChat: Chat = data.createChat;
+
+      // Add to store (socket will also trigger this, but we want immediate feedback)
+      store.addChat(newChat);
+
+      // Cache updated data
+      await store.saveToCache();
+
+      logger.info("Chat created successfully:", newChat._id);
+      return newChat;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to create chat";
-      setError(errorMessage);
+      store.setError(errorMessage);
       logger.error("Failed to create chat:", error);
       throw error;
     } finally {
-      setLoading(false);
+      store.setLoading(false);
     }
   };
 
   // Update chat
   const updateChat = async (id: string, updateData: UpdateChatDto) => {
     try {
-      setLoading(true);
-      setError(null);
+      store.clearError();
 
       logger.info("Updating chat:", id, updateData);
 
@@ -204,73 +177,100 @@ export const useChats = () => {
         variables: { id, payload: updateData },
       });
 
-      if (data?.updateChat) {
-        const updatedChat = data.updateChat;
-        updateChatData(updatedChat);
-        logger.info("Chat updated successfully:", updatedChat._id);
-        return updatedChat;
-      } else {
+      if (!data?.updateChat) {
         throw new Error("Failed to update chat: No data returned");
       }
+
+      const updatedChat: Chat = data.updateChat;
+
+      // Update store
+      store.updateChat(updatedChat);
+
+      // Cache updated data
+      await store.saveToCache();
+
+      logger.info("Chat updated successfully:", updatedChat._id);
+      return updatedChat;
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to update chat";
-      setError(errorMessage);
+      store.setError(errorMessage);
       logger.error("Failed to update chat:", error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Send message
-  const sendMessage = async (messageData: AddMessageDto) => {
+  // Delete chat
+  const deleteChat = async (id: string) => {
     try {
-      setLoading(true);
-      setError(null);
+      store.setLoading(true);
+      store.clearError();
 
-      logger.info("Sending message to branch:", messageData.branchId);
+      logger.info("Deleting chat:", id);
 
-      const { data } = await sendMessageMutation({
-        variables: { payload: messageData },
+      await deleteChatMutation({
+        variables: { id },
       });
 
-      if (data?.sendMessage) {
-        logger.info("Message sent successfully");
-        return true;
-      } else {
-        throw new Error("Failed to send message");
-      }
+      // Remove from store
+      store.removeChat(id);
+
+      // Cache updated data
+      await store.saveToCache();
+
+      logger.info("Chat deleted successfully:", id);
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to send message";
-      setError(errorMessage);
-      logger.error("Failed to send message:", error);
+        error instanceof Error ? error.message : "Failed to delete chat";
+      store.setError(errorMessage);
+      logger.error("Failed to delete chat:", error);
       throw error;
     } finally {
-      setLoading(false);
+      store.setLoading(false);
+    }
+  };
+
+  // Force sync with server
+  const forceSyncWithServer = async () => {
+    if (!isOnline) {
+      logger.warn("Cannot sync: offline");
+      return false;
+    }
+
+    try {
+      store.setLoading(true);
+      await loadChats({ ...store.currentParams, offset: 0 });
+      logger.info("Manual sync completed");
+      return true;
+    } catch (error) {
+      logger.error("Manual sync failed:", error);
+      return false;
+    } finally {
+      store.setLoading(false);
     }
   };
 
   return {
     // State
-    chats,
-    currentChat,
-    currentBranches,
-    messages,
-    hasMoreChats,
-    hasMoreMessages,
-    isLoading,
-    error,
+    chats: store.chats,
+    currentChat: store.currentChat,
+    isLoading: store.isLoading || queryLoading,
+    error: store.error,
+    hasMore: store.hasMore,
+    total: store.total,
+    isInitialized: store.isInitialized,
+    isOnline,
 
     // Actions
     loadChats,
-    loadChat,
-    loadMessages,
+    loadMoreChats,
     createChat,
-    sendMessage,
-    setCurrentChat,
-    clearError,
     updateChat,
+    deleteChat,
+    setCurrentChat: store.setCurrentChat,
+    clearError: store.clearError,
+
+    // Utilities
+    forceSyncWithServer,
   };
 };
