@@ -7,13 +7,16 @@ import { MessageSkeleton } from "../ui/Skeleton";
 import { MessageRenderer } from "./MessageRenderer";
 import { TTSButton } from "./TTSButton";
 
+type Nullable<T> = T | null;
+
 interface ChatAreaProps {
-  messages: Message[];
+  messages: Nullable<Message>[];
   isLoading: boolean;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
   const { preferences } = usePreferences();
+  const filteredMessages: Message[] = messages.filter(Boolean) as Message[];
 
   const copyMessage = (content: string) => {
     navigator.clipboard.writeText(content);
@@ -91,7 +94,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
 
   return (
     <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 my-28">
-      {messages.map((message) => (
+      {filteredMessages.map((message) => (
         <div
           key={message._id}
           className={`flex gap-2 sm:gap-4 ${

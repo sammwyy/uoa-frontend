@@ -278,7 +278,32 @@ export const DELETE_CHAT_MUTATION = gql`
 
 export const SEND_MESSAGE_MUTATION = gql`
   mutation SendMessage($payload: AddMessageDto!) {
-    sendMessage(payload: $payload)
+    sendMessage(payload: $payload) {
+      _id
+      role
+      content {
+        type
+        text
+        id
+        name
+        tool_use_id
+      }
+      attachments
+      index
+      isEdited
+      editedAt
+      modelUsed
+      tokens
+      branchId
+      createdAt
+      originalContent {
+        type
+        text
+        id
+        name
+        tool_use_id
+      }
+    }
   }
 `;
 

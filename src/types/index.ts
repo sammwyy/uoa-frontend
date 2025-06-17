@@ -29,6 +29,12 @@ export interface SocketEvents {
   "message:updated": (message: Message) => void;
   "message:deleted": (messageId: string) => void;
 
+  // Message (Streaming) events
+  "message:start": () => void;
+  "message:chunk": (part: string) => void;
+  "message:end": (message: Message) => void;
+  "message:error": (error: string) => void;
+
   // API Key events
   "apikey:added": (apiKey: ApiKey) => void;
   "apikey:updated": (apiKey: ApiKey) => void;

@@ -12,10 +12,12 @@ import {
   Chat,
   ChatBranch,
   GetMessagesDto,
+  Message,
   MessagesResponse,
   ModelConfig,
 } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
+import { socketManager } from "@/lib/socket/socket-client";
 import { useEffect, useState } from "react";
 import { LoadingScreen } from "../layout/LoadingScreen";
 import { ChatArea } from "./ChatArea";
@@ -32,7 +34,8 @@ export function ChatView({ chatId }: ChatViewProps) {
   const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
   const [chat, setChat] = useState<Chat | null>(null);
-  const [currentBranch, setCurrentBranch] = useState<ChatBranch | null>(null);
+  const [selectedBranch, setSelectedBranch] = useState<string | null>(null); // Selected branch id
+  const [currentBranch, setCurrentBranch] = useState<ChatBranch | null>(null); // Populated current branch (Same as selected branch)
   const [branches, setBranches] = useState<ChatBranch[]>([]);
   const [messages, setMessages] = useState<MessagesResponse>({
     hasMore: false,
@@ -40,6 +43,8 @@ export function ChatView({ chatId }: ChatViewProps) {
     total: -1,
   });
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const [currentStreamMessage, setCurrentStreamMessage] =
+    useState<Message | null>(null);
   const { toggleTool, toolStates } = useTools(Tools);
 
   // Tools configuration state
@@ -50,7 +55,62 @@ export function ChatView({ chatId }: ChatViewProps) {
     modelId: undefined,
   });
 
-  //  Update branch
+  // Register socket listeners
+  useEffect(() => {
+    socketManager.setListeners({
+      "message:start": () => {
+        setCurrentStreamMessage({
+          _id: "",
+          role: "assistant",
+          content: [{ type: "text", text: "" }],
+          createdAt: new Date().toString(),
+          attachments: [],
+          branchId: "",
+          index: 0,
+          isEdited: false,
+        });
+      },
+      "message:chunk": (chunk: string) => {
+        setCurrentStreamMessage((prev) => {
+          if (!prev) {
+            return null;
+          }
+          const content = prev.content;
+          const first = content[0];
+          first.text += chunk;
+          return {
+            ...prev,
+            content,
+          };
+        });
+      },
+      "message:end": (message: Message) => {
+        if (message) {
+          setMessages((prev) => ({
+            ...prev,
+            total: prev.total + 1,
+            messages: [...prev.messages, message],
+          }));
+        }
+        setCurrentStreamMessage(null);
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    const branchId = selectedBranch;
+    if (!branchId) {
+      return;
+    }
+
+    socketManager.emit("join-branch", { branchId });
+
+    return () => {
+      socketManager.emit("leave-branch", { branchId });
+    };
+  }, [selectedBranch]);
+
+  // Update branch
   const updateBranch = async (
     branchId: string,
     updates: Partial<ChatBranch>
@@ -107,6 +167,7 @@ export function ChatView({ chatId }: ChatViewProps) {
         setChat(chat);
         setBranches(branches);
         setCurrentBranch(chat.defaultBranch);
+        setSelectedBranch(chat.defaultBranch._id);
         setModelConfig({
           temperature: 0.7,
           maxTokens: 2048,
@@ -221,7 +282,14 @@ export function ChatView({ chatId }: ChatViewProps) {
       return;
     }
 
-    sendMessage({
+    console.log(
+      "Sending message:",
+      message,
+      " with model:",
+      modelConfig.modelId
+    );
+
+    const newMessage = await sendMessage({
       apiKeyId: modelConfig.apiKeyId,
       branchId: currentBranch._id,
       modelId: modelConfig.modelId,
@@ -229,12 +297,21 @@ export function ChatView({ chatId }: ChatViewProps) {
       rawDecryptKey: session.decryptKey,
     });
 
-    console.log(
-      "Sending message:",
-      message,
-      " with model:",
-      modelConfig.modelId
-    );
+    console.log("New message sent:", newMessage._id);
+
+    setMessages((prev) => ({
+      ...prev,
+      messages: [...prev.messages, newMessage],
+      total: prev.total + 1,
+    }));
+
+    setCurrentBranch((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        messageCount: prev.messageCount + 1,
+      };
+    });
   };
 
   useEffect(() => {
@@ -242,12 +319,12 @@ export function ChatView({ chatId }: ChatViewProps) {
   }, [chatId]);
 
   useEffect(() => {
-    console.log("Current branch:", currentBranch);
-    if (currentBranch) {
-      loadMessages({ branchId: currentBranch._id }, false);
+    console.log("Current branch:", selectedBranch);
+    if (selectedBranch) {
+      loadMessages({ branchId: selectedBranch }, false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentBranch]);
+  }, [selectedBranch]);
 
   // Show loading screen while loading chat data
   if (loading && !chat) {
@@ -302,7 +379,10 @@ export function ChatView({ chatId }: ChatViewProps) {
 
       {/* SCROLLABLE CONTENT AREA - Full height with padding for floating elements */}
       <div className="h-full overflow-y-auto">
-        <ChatArea messages={messages.messages} isLoading={messagesLoading} />
+        <ChatArea
+          messages={[...messages.messages, currentStreamMessage]}
+          isLoading={messagesLoading}
+        />
       </div>
 
       {/* FLOATING INPUT AND TOOLS - Positioned absolutely at bottom */}

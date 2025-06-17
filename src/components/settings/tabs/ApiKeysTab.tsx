@@ -85,14 +85,6 @@ export function ApiKeysTab() {
       setIsSettingApiKey(false);
       setShowApiKeyModal(null);
       setApiKeyInput("");
-
-      if (isValid) {
-        alert(
-          `${
-            provider.charAt(0).toUpperCase() + provider.slice(1)
-          } API key set successfully!`
-        );
-      }
     }, 2000);
   };
 
@@ -191,7 +183,8 @@ export function ApiKeysTab() {
         onClose={() => setShowApiKeyModal(null)}
         size="sm"
         title={`Set ${
-          showApiKeyModal!.charAt(0).toUpperCase() + showApiKeyModal!.slice(1)
+          showApiKeyModal?.charAt(0).toUpperCase() ||
+          "" + showApiKeyModal?.slice(1)
         } API Key`}
       >
         <div className="space-y-4">

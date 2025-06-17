@@ -2,11 +2,45 @@
  * Socket.IO client for real-time updates
  * Handles chat messages, API key updates, and authentication events
  */
-import { io, Socket } from "socket.io-client";
-
 import type { SocketEvents } from "@/types";
+import { io, Socket } from "socket.io-client";
 import { logger } from "../logger";
 import { LocalStorage } from "../storage/local-storage";
+
+// 📦 Event list to map automatically
+const SOCKET_EVENTS: {
+  event: keyof SocketEvents;
+}[] = [
+  // Auth
+  { event: "auth:token_refreshed" },
+  { event: "auth:logout" },
+
+  // Chat
+  { event: "chat:created" },
+  { event: "chat:updated" },
+  { event: "chat:deleted" },
+
+  // Message
+  { event: "message:new" },
+  { event: "message:updated" },
+  { event: "message:deleted" },
+
+  { event: "message:start" },
+  { event: "message:chunk" },
+  { event: "message:end" },
+  { event: "message:error" },
+
+  // API Key
+  { event: "apikey:added" },
+  { event: "apikey:updated" },
+  { event: "apikey:deleted" },
+
+  // User
+  { event: "user:updated" },
+
+  // Preferences
+  { event: "preferences:updated" },
+];
 
 class SocketManager {
   private static instance: SocketManager;
@@ -25,9 +59,6 @@ class SocketManager {
     return SocketManager.instance;
   }
 
-  /**
-   * Connect to the socket server
-   */
   connect(): void {
     if (this.socket?.connected || this.isConnecting) {
       logger.debug("Socket already connected or connecting");
@@ -47,9 +78,7 @@ class SocketManager {
       this.socket = io(
         import.meta.env.VITE_SOCKET_ENDPOINT || "http://localhost:4000",
         {
-          auth: {
-            token: tokens.accessToken,
-          },
+          auth: { token: tokens.accessToken },
           transports: ["websocket"],
           reconnection: true,
           reconnectionDelay: 1000,
@@ -68,9 +97,6 @@ class SocketManager {
     }
   }
 
-  /**
-   * Setup socket event handlers
-   */
   private setupEventHandlers(): void {
     if (!this.socket) return;
 
@@ -108,115 +134,23 @@ class SocketManager {
       }
     });
 
-    // Authentication events
-    this.socket.on("auth:token_refreshed", (data) => {
-      logger.info("Received token refresh from server");
-      if (this.listeners["auth:token_refreshed"]) {
-        this.listeners["auth:token_refreshed"](data);
-      }
-    });
-
-    this.socket.on("auth:logout", () => {
-      logger.info("Received logout signal from server");
-      if (this.listeners["auth:logout"]) {
-        this.listeners["auth:logout"]();
-      }
-    });
-
-    // Chat events
-    this.socket.on("chat:created", (chat) => {
-      logger.debug("New chat created:", chat._id);
-      if (this.listeners["chat:created"]) {
-        this.listeners["chat:created"](chat);
-      }
-    });
-
-    this.socket.on("chat:updated", (chat) => {
-      logger.debug("Chat updated:", chat._id);
-      if (this.listeners["chat:updated"]) {
-        this.listeners["chat:updated"](chat);
-      }
-    });
-
-    this.socket.on("chat:deleted", (chatId) => {
-      logger.debug("Chat deleted:", chatId);
-      if (this.listeners["chat:deleted"]) {
-        this.listeners["chat:deleted"](chatId);
-      }
-    });
-
-    // Message events
-    this.socket.on("message:new", (message) => {
-      logger.debug("New message received:", message._id);
-      if (this.listeners["message:new"]) {
-        this.listeners["message:new"](message);
-      }
-    });
-
-    this.socket.on("message:updated", (message) => {
-      logger.debug("Message updated:", message._id);
-      if (this.listeners["message:updated"]) {
-        this.listeners["message:updated"](message);
-      }
-    });
-
-    this.socket.on("message:deleted", (messageId) => {
-      logger.debug("Message deleted:", messageId);
-      if (this.listeners["message:deleted"]) {
-        this.listeners["message:deleted"](messageId);
-      }
-    });
-
-    // API Key events
-    this.socket.on("apikey:added", (apiKey) => {
-      logger.debug("API key added:", apiKey._id);
-      if (this.listeners["apikey:added"]) {
-        this.listeners["apikey:added"](apiKey);
-      }
-    });
-
-    this.socket.on("apikey:updated", (apiKey) => {
-      logger.debug("API key updated:", apiKey._id);
-      if (this.listeners["apikey:updated"]) {
-        this.listeners["apikey:updated"](apiKey);
-      }
-    });
-
-    this.socket.on("apikey:deleted", (apiKeyId) => {
-      logger.debug("API key deleted:", apiKeyId);
-      if (this.listeners["apikey:deleted"]) {
-        this.listeners["apikey:deleted"](apiKeyId);
-      }
-    });
-
-    // User events
-    this.socket.on("user:updated", (user) => {
-      logger.debug("User updated:", user._id);
-      if (this.listeners["user:updated"]) {
-        this.listeners["user:updated"](user);
-      }
-    });
-
-    // Preferences events
-    this.socket.on("preferences:updated", (preferences) => {
-      logger.debug("Preferences updated");
-      if (this.listeners["preferences:updated"]) {
-        this.listeners["preferences:updated"](preferences);
-      }
-    });
+    // Generic handler mapping
+    for (const { event } of SOCKET_EVENTS) {
+      this.socket.on(event, (data) => {
+        logger.debug(`Event received: ${event}`, data);
+        const handler = this.listeners[event];
+        if (handler) {
+          handler(data);
+        }
+      });
+    }
   }
 
-  /**
-   * Set event listeners
-   */
   setListeners(listeners: Partial<SocketEvents>): void {
     this.listeners = { ...this.listeners, ...listeners };
     logger.debug("Socket listeners updated");
   }
 
-  /**
-   * Emit an event to the server
-   */
   emit(event: string, data?: unknown): void {
     if (!this.socket?.connected) {
       logger.warn("Socket not connected, cannot emit event:", event);
@@ -227,9 +161,6 @@ class SocketManager {
     logger.debug("Socket event emitted:", event);
   }
 
-  /**
-   * Update authentication token
-   */
   updateAuth(accessToken: string): void {
     if (!this.socket) {
       logger.warn("Socket not initialized");
@@ -246,9 +177,6 @@ class SocketManager {
     logger.info("Socket auth updated, reconnecting");
   }
 
-  /**
-   * Disconnect from the socket server
-   */
   disconnect(): void {
     if (this.socket) {
       this.socket.disconnect();
@@ -260,16 +188,10 @@ class SocketManager {
     logger.info("Socket disconnected");
   }
 
-  /**
-   * Check if socket is connected
-   */
   isConnected(): boolean {
     return this.socket?.connected ?? false;
   }
 
-  /**
-   * Get connection status
-   */
   getStatus(): {
     connected: boolean;
     connecting: boolean;

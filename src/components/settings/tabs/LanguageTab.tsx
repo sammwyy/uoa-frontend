@@ -162,8 +162,8 @@ export function LanguageTab() {
                 Current Time:
               </span>
               <p className="text-gray-600 dark:text-gray-400">
-                {new Date().toLocaleTimeString(preferences.language, {
-                  timeZone: preferences.timezone,
+                {new Date().toLocaleTimeString(preferences.language || "en", {
+                  timeZone: preferences.timezone || "UTC",
                   hour12: !preferences.use24HourFormat,
                 })}
               </p>
@@ -173,8 +173,8 @@ export function LanguageTab() {
                 Current Date:
               </span>
               <p className="text-gray-600 dark:text-gray-400">
-                {new Date().toLocaleDateString(preferences.language, {
-                  timeZone: preferences.timezone,
+                {new Date().toLocaleDateString(preferences.language || "en", {
+                  timeZone: preferences.timezone || "UTC",
                 })}
               </p>
             </div>

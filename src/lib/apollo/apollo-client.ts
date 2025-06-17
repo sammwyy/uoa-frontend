@@ -307,7 +307,8 @@ class ApolloClientManager {
         // Store new tokens
         LocalStorage.setAuthTokens(
           newTokens.accessToken,
-          newTokens.refreshToken
+          newTokens.refreshToken,
+          newTokens.decryptKey
         );
         logger.info("Tokens refreshed successfully");
         return newTokens;
