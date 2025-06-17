@@ -160,3 +160,21 @@ export interface User {
   updatedAt: string;
   preferences?: Preferences;
 }
+
+// File upload
+export interface FileUpload {
+  _id: string;
+  filename: string;
+  originalName: string;
+  mimetype: string;
+  size: number;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserStorageStats {
+  used: number;
+  limit: number;
+  remaining: number;
+}

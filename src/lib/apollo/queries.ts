@@ -468,3 +468,35 @@ export const REVOKE_ALL_SESSIONS_MUTATION = gql`
     revokeAllSessions
   }
 `;
+
+// File uploads
+export const GET_USER_FILES_QUERY = gql`
+  query GetUserFiles {
+    getUserFiles {
+      _id
+      filename
+      originalName
+      mimetype
+      size
+      description
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const GET_USER_STORAGE_STATS_QUERY = gql`
+  query GetUserStorageStats {
+    getUserStorageStats {
+      used
+      limit
+      remaining
+    }
+  }
+`;
+
+export const DELETE_FILE_MUTATION = gql`
+  mutation DeleteFile($id: String!) {
+    deleteFile(id: $id)
+  }
+`;

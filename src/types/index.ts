@@ -2,6 +2,7 @@ import {
   ApiKey,
   Chat,
   ChatBranch,
+  FileUpload,
   Message,
   Preferences,
   User,
@@ -74,4 +75,35 @@ export interface StorageConfig {
     apiKeys: string;
     models: string;
   };
+}
+
+// File upload
+export interface UploadResponse {
+  message: string;
+  file: FileUpload;
+}
+
+export interface UploadError {
+  message: string;
+  statusCode: number;
+  error?: string;
+}
+
+export interface UploadProgress {
+  loaded: number;
+  total: number;
+  percentage: number;
+}
+
+export interface UploadOptions {
+  baseUrl?: string;
+  token?: string | (() => string);
+  onProgress?: (progress: UploadProgress) => void;
+  onSuccess?: (response: UploadResponse) => void;
+  onError?: (error: UploadError) => void;
+  onStart?: () => void;
+  onComplete?: () => void;
+  maxFileSize?: number;
+  allowedTypes?: string[];
+  timeout?: number;
 }
