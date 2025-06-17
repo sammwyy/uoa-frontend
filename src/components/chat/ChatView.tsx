@@ -1,3 +1,4 @@
+// ToDo: Nuke this file.
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChats";
 import { useTools } from "@/hooks/useTools";
@@ -9,6 +10,7 @@ import {
 } from "@/lib/apollo/queries";
 import { Tools } from "@/lib/data/tools";
 import {
+  AddMessageDto,
   Chat,
   ChatBranch,
   GetMessagesDto,
@@ -60,6 +62,21 @@ export function ChatView({ chatId }: ChatViewProps) {
     apiKeyId: undefined,
     modelId: undefined,
   });
+
+  useEffect(() => {
+    const pendingMessage = localStorage.getItem("uoa:tempPendingMessage");
+    if (!pendingMessage || !chat) {
+      return;
+    }
+
+    localStorage.removeItem("uoa:tempPendingMessage");
+    const message = JSON.parse(pendingMessage) as AddMessageDto;
+
+    setTimeout(async () => {
+      sendMessageServer(message);
+    }, 500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chat]);
 
   // Register socket listeners
   useEffect(() => {
@@ -287,61 +304,60 @@ export function ChatView({ chatId }: ChatViewProps) {
     updateBranch(currentBranch._id, { modelConfig: newConfig });
   };
 
-  const handleSendMessage = async (message: string) => {
+  const sendMessageServer = async (dto: AddMessageDto) => {
     if (!chat) {
       console.error("Chat not loaded, cannot send message");
       return;
     }
 
-    if (!message.trim()) {
+    if (!dto.prompt.trim()) {
       console.warn("Empty message, not sending");
       return;
     }
 
-    if (!modelConfig.modelId) {
+    if (!dto.modelId) {
       console.error("No model selected, cannot send message");
       return;
     }
 
-    if (!currentBranch?._id) {
+    if (!dto.branchId) {
       console.error("No current branch selected, cannot send message");
       return;
     }
 
-    if (!session?.decryptKey) {
+    if (!dto.rawDecryptKey) {
       console.error("No session decrypt key available, cannot send message");
       return;
     }
 
-    if (!modelConfig.apiKeyId) {
+    if (!dto.apiKeyId) {
       console.error("Chat does not have an API key, cannot send message");
       return;
     }
 
-    console.log(
-      "Sending message:",
-      message,
-      " with model:",
-      modelConfig.modelId
-    );
+    console.log("Sending message:", dto.prompt, " with model:", dto.modelId);
 
     const sending = createDummyMessage({
       _id: "user-pending",
-      branchId: currentBranch._id,
+      branchId: dto.branchId,
       role: "user",
-      content: [{ type: "text", text: message }],
+      content: [{ type: "text", text: dto.prompt }],
     });
+
     setCurrentSendingMessage(sending);
-
-    await sendMessage({
-      apiKeyId: modelConfig.apiKeyId,
-      branchId: currentBranch._id,
-      modelId: modelConfig.modelId,
-      prompt: message,
-      rawDecryptKey: session.decryptKey,
-    });
-
+    await sendMessage(dto);
     setCurrentSendingMessage(null);
+  };
+
+  const handleSendMessage = async (message: string) => {
+    // ToDo: Damn...
+    sendMessageServer({
+      prompt: message,
+      apiKeyId: modelConfig.apiKeyId!,
+      branchId: selectedBranch!,
+      modelId: modelConfig.modelId!,
+      rawDecryptKey: session?.decryptKey as string,
+    });
   };
 
   useEffect(() => {

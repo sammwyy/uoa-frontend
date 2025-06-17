@@ -3,8 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePreferences } from "@/hooks/usePreferences";
 import { Message } from "@/lib/graphql";
-import { MessageSkeleton } from "../ui/Skeleton";
-import { ChatAreaEmptySuggestions } from "./ChatAreaEmptySuggestions";
+import { MessageSkeleton, Skeleton } from "../ui/Skeleton";
 import { MessageCard } from "./MessageCard";
 
 type Nullable<T> = T | null;
@@ -173,7 +172,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   ) {
     return (
       <div className="w-full max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
-        <ChatAreaEmptySuggestions />
+        <Skeleton height="1rem" width="100%" />
       </div>
     );
   }

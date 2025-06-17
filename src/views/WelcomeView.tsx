@@ -3,31 +3,57 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ChatInput } from "@/components/chat/ChatInput";
+import { ModelSelector } from "@/components/chat/ModelSelector";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChats";
 import { useModels } from "@/hooks/useModels";
 import { useTools } from "@/hooks/useTools";
 import { Tools } from "@/lib/data/tools";
+import { ChatBranch } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { Card } from "../components/ui/Card";
 
 export const WelcomeView: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
-  const { toggle: toggleSidebar } = useSidebarStore();
-  const { createChat, sendMessage } = useChats();
   const { models } = useModels();
+  const { user, isAuthenticated, session } = useAuth();
+  const { toggle: toggleSidebar } = useSidebarStore();
+  const { createChat } = useChats();
   const { toggleTool, toolStates } = useTools(Tools);
 
   const navigate = useNavigate();
 
   const [isCreatingChat, setIsCreatingChat] = useState(false);
-
-  // Get default model (first enabled model)
-  const defaultModel = models.find((m) => m.enabled) || models[0];
+  const [dummyNewBranch, setDummyNewBranch] = useState<ChatBranch>({
+    _id: "dummy-new-branch",
+    branchPoint: 0,
+    isActive: true,
+    messageCount: 0,
+    name: "New Chat",
+    chatId: "",
+    modelConfig: {},
+  });
+  const selectedModel = models.find(
+    (model) => model.id === dummyNewBranch.modelConfig?.modelId
+  );
 
   const handleSendMessage = async (message: string) => {
+    if (!selectedModel) {
+      console.error("No model selected, cannot send message");
+      return;
+    }
+
+    if (!dummyNewBranch.modelConfig?.apiKeyId) {
+      console.error("No API key selected, cannot send message");
+      return;
+    }
+
+    if (!session?.decryptKey) {
+      console.error("No session decrypt key available, cannot send message");
+      return;
+    }
+
     if (!isAuthenticated) {
       navigate("/auth");
       return;
@@ -40,29 +66,29 @@ export const WelcomeView: React.FC = () => {
       // Create new chat
       const newChat = await createChat();
 
+      // Add pending message
+      // ToDo: Move this to a global context/hook.
+
       if (newChat && newChat.defaultBranch) {
-        // Send the message to the new chat
-        await sendMessage({
-          branchId: newChat.defaultBranch._id,
-          prompt: message,
-          modelId: defaultModel?.id,
-          apiKeyId: "", // Use default API key
-          rawDecryptKey: "", // Will be handled by the backend
-        });
+        localStorage.setItem(
+          "uoa:tempPendingMessage",
+          JSON.stringify({
+            branchId: newChat.defaultBranch._id,
+            prompt: message,
+            modelId: selectedModel?.id,
+            apiKeyId: dummyNewBranch.modelConfig?.apiKeyId,
+            rawDecryptKey: session?.decryptKey,
+          })
+        );
 
         // Navigate to the new chat
         navigate(`/c/${newChat._id}`);
       }
     } catch (error) {
       logger.error("Failed to create chat and send message:", error);
-      // TODO: Show error toast
     } finally {
       setIsCreatingChat(false);
     }
-  };
-
-  const handleSuggestionClick = (prompt: string) => {
-    handleSendMessage(prompt);
   };
 
   const getGreeting = () => {
@@ -86,6 +112,20 @@ export const WelcomeView: React.FC = () => {
             onClick={toggleSidebar}
             className="p-2 flex-shrink-0"
             title="Toggle sidebar"
+          />
+
+          <ModelSelector
+            models={models}
+            selectedModel={selectedModel}
+            onSelectModel={(model) => {
+              setDummyNewBranch((prev) => ({
+                ...prev,
+                modelConfig: {
+                  ...prev.modelConfig,
+                  modelId: model.id,
+                },
+              }));
+            }}
           />
         </div>
 
@@ -167,6 +207,16 @@ export const WelcomeView: React.FC = () => {
               : "Sign in to start chatting with AI..."
           }
           disabled={!isAuthenticated}
+          modelConfig={dummyNewBranch.modelConfig || {}}
+          onChangeModelConfig={(config) => {
+            setDummyNewBranch((prev) => ({
+              ...prev,
+              modelConfig: {
+                ...prev.modelConfig,
+                ...config,
+              },
+            }));
+          }}
         />
 
         {!isAuthenticated && (
