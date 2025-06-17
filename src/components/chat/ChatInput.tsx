@@ -35,7 +35,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const { models } = useModels();
   const currentModel =
-    models.find((model) => model.id === modelConfig.modelId) || null;
+    models.find((model) => model.id === modelConfig?.modelId) || null;
 
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);

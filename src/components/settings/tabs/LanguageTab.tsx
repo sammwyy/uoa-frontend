@@ -2,19 +2,12 @@ import { Card } from "@/components/ui/Card";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { Switch } from "@/components/ui/Switch";
 import { usePreferences } from "@/hooks/usePreferences";
-import { Clock } from "lucide-react";
 
 interface LanguageOption {
   value: string;
   label: string;
   flag: string;
   region?: string;
-}
-
-interface TimeZoneOption {
-  value: string;
-  label: string;
-  offset: string;
 }
 
 interface DateFormatOption {
@@ -36,23 +29,6 @@ const languageOptions: LanguageOption[] = [
   { value: "ko", label: "한국어", flag: "🇰🇷", region: "Korea" },
   { value: "zh", label: "中文", flag: "🇨🇳", region: "简体" },
   { value: "zh-TW", label: "中文", flag: "🇹🇼", region: "繁體" },
-];
-
-const timeZoneOptions: TimeZoneOption[] = [
-  { value: "America/New_York", label: "Eastern Time", offset: "UTC-5" },
-  { value: "America/Chicago", label: "Central Time", offset: "UTC-6" },
-  { value: "America/Denver", label: "Mountain Time", offset: "UTC-7" },
-  { value: "America/Los_Angeles", label: "Pacific Time", offset: "UTC-8" },
-  { value: "Europe/London", label: "Greenwich Mean Time", offset: "UTC+0" },
-  { value: "Europe/Paris", label: "Central European Time", offset: "UTC+1" },
-  { value: "Europe/Moscow", label: "Moscow Time", offset: "UTC+3" },
-  { value: "Asia/Tokyo", label: "Japan Standard Time", offset: "UTC+9" },
-  { value: "Asia/Shanghai", label: "China Standard Time", offset: "UTC+8" },
-  {
-    value: "Australia/Sydney",
-    label: "Australian Eastern Time",
-    offset: "UTC+10",
-  },
 ];
 
 const dateFormatOptions: DateFormatOption[] = [
@@ -92,24 +68,6 @@ export function LanguageTab() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Time Zone
-            </label>
-            <Dropdown
-              options={timeZoneOptions.map((tz) => ({
-                value: tz.value,
-                label: tz.label,
-                description: tz.offset,
-                icon: Clock,
-              }))}
-              value={preferences.timezone}
-              onSelect={(value) => updatePreference("timezone", value)}
-              placeholder="Select time zone..."
-              disabled={isLoading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Date Format
             </label>
             <Dropdown
@@ -139,14 +97,6 @@ export function LanguageTab() {
             label="Use 24-hour time format"
             description="Display time in 24-hour format (14:30) instead of 12-hour format (2:30 PM)"
           />
-
-          <Switch
-            checked={preferences.useMetricUnits}
-            onChange={(checked) => updatePreference("useMetricUnits", checked)}
-            disabled={isLoading}
-            label="Use metric units"
-            description="Display measurements in metric units (km, kg, °C) instead of imperial"
-          />
         </Card>
       </div>
 
@@ -163,7 +113,6 @@ export function LanguageTab() {
               </span>
               <p className="text-gray-600 dark:text-gray-400">
                 {new Date().toLocaleTimeString(preferences.language || "en", {
-                  timeZone: preferences.timezone || "UTC",
                   hour12: !preferences.use24HourFormat,
                 })}
               </p>
@@ -173,25 +122,7 @@ export function LanguageTab() {
                 Current Date:
               </span>
               <p className="text-gray-600 dark:text-gray-400">
-                {new Date().toLocaleDateString(preferences.language || "en", {
-                  timeZone: preferences.timezone || "UTC",
-                })}
-              </p>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                Temperature:
-              </span>
-              <p className="text-gray-600 dark:text-gray-400">
-                {preferences.useMetricUnits ? "22°C" : "72°F"}
-              </p>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">
-                Distance:
-              </span>
-              <p className="text-gray-600 dark:text-gray-400">
-                {preferences.useMetricUnits ? "5 km" : "3.1 miles"}
+                {new Date().toLocaleDateString(preferences.language || "en")}
               </p>
             </div>
           </div>

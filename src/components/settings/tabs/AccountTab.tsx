@@ -1,4 +1,14 @@
-import { AlertCircle, Check, Key, Smartphone, User } from "lucide-react";
+import { useMutation } from "@apollo/client";
+import {
+  Check,
+  Edit3,
+  Key,
+  LogOut,
+  Monitor,
+  Smartphone,
+  Trash2,
+  User,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -6,12 +16,39 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PasswordInput } from "@/components/ui/PasswordInput";
+import { useAuth } from "@/hooks/useAuth";
+import { useSessions } from "@/hooks/useSessions";
+import {
+  UPDATE_PASSWORD_MUTATION,
+  UPDATE_USER_MUTATION,
+} from "@/lib/apollo/queries";
+import type { ChangePasswordDto, UpdateUserDto } from "@/lib/graphql";
+import { logger } from "@/lib/logger";
 
 export function AccountTab() {
+  const { user, logout } = useAuth();
+  const {
+    sessions,
+    isLoading: sessionsLoading,
+    revokeSession,
+    revokeAllOtherSessions,
+  } = useSessions();
+
+  // Profile editing state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    displayName: user?.displayName || "",
+    email: user?.email || "",
+  });
+  const [profileErrors, setProfileErrors] = useState<Record<string, string>>(
+    {}
+  );
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
   // Password change state
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
+    oldPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -20,112 +57,350 @@ export function AccountTab() {
   );
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Two-factor authentication state
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
-  const [showTwoFactorSetup, setShowTwoFactorSetup] = useState(false);
-  const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [isSettingUpTwoFactor, setIsSettingUpTwoFactor] = useState(false);
+  // Session management state
+  const [revokingSession, setRevokingSession] = useState<string | null>(null);
+  const [revokingAllSessions, setRevokingAllSessions] = useState(false);
 
-  const handlePasswordChange = async () => {
+  // Mutations
+  const [updateUserMutation] = useMutation(UPDATE_USER_MUTATION);
+  const [updatePasswordMutation] = useMutation(UPDATE_PASSWORD_MUTATION);
+
+  // Profile editing handlers
+  const handleStartEditProfile = () => {
+    setProfileForm({
+      displayName: user?.displayName || "",
+      email: user?.email || "",
+    });
+    setProfileErrors({});
+    setIsEditingProfile(true);
+  };
+
+  const handleCancelEditProfile = () => {
+    setIsEditingProfile(false);
+    setProfileForm({
+      displayName: user?.displayName || "",
+      email: user?.email || "",
+    });
+    setProfileErrors({});
+  };
+
+  const validateProfileForm = () => {
     const errors: Record<string, string> = {};
 
-    if (!passwordForm.currentPassword) {
-      errors.currentPassword = "Current password is required";
+    if (!profileForm.displayName.trim()) {
+      errors.displayName = "Display name is required";
+    } else if (profileForm.displayName.trim().length < 2) {
+      errors.displayName = "Display name must be at least 2 characters";
     }
+
+    if (!profileForm.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(profileForm.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    setProfileErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!validateProfileForm()) return;
+
+    try {
+      setIsUpdatingProfile(true);
+      setProfileErrors({});
+
+      const updateData: UpdateUserDto = {};
+
+      if (profileForm.displayName !== user?.displayName) {
+        updateData.displayName = profileForm.displayName.trim();
+      }
+
+      if (profileForm.email !== user?.email) {
+        updateData.email = profileForm.email.trim();
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        setIsEditingProfile(false);
+        return;
+      }
+
+      logger.info("Updating user profile:", updateData);
+
+      const { data } = await updateUserMutation({
+        variables: { payload: updateData },
+      });
+
+      if (data?.updateUser) {
+        setIsEditingProfile(false);
+        logger.info("Profile updated successfully");
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to update profile";
+      setProfileErrors({ submit: errorMessage });
+      logger.error("Failed to update profile:", error);
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  // Password change handlers
+  const validatePasswordForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!passwordForm.oldPassword) {
+      errors.oldPassword = "Current password is required";
+    }
+
     if (!passwordForm.newPassword) {
       errors.newPassword = "New password is required";
-    } else if (passwordForm.newPassword.length < 8) {
-      errors.newPassword = "Password must be at least 8 characters";
+    } else if (passwordForm.newPassword.length < 6) {
+      errors.newPassword = "Password must be at least 6 characters";
     }
+
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       errors.confirmPassword = "Passwords do not match";
     }
 
     setPasswordErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
-    if (Object.keys(errors).length === 0) {
+  const handlePasswordChange = async () => {
+    if (!validatePasswordForm()) return;
+
+    try {
       setIsChangingPassword(true);
-      // Simulate API call
-      setTimeout(() => {
-        setIsChangingPassword(false);
+      setPasswordErrors({});
+
+      const changeData: ChangePasswordDto = {
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword,
+      };
+
+      logger.info("Changing password");
+
+      const { data } = await updatePasswordMutation({
+        variables: { payload: changeData },
+      });
+
+      if (data?.updatePassword) {
         setPasswordForm({
-          currentPassword: "",
+          oldPassword: "",
           newPassword: "",
           confirmPassword: "",
         });
         setShowPasswordForm(false);
-        alert("Password changed successfully!");
-      }, 2000);
+        logger.info("Password changed successfully");
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to change password";
+      setPasswordErrors({ submit: errorMessage });
+      logger.error("Failed to change password:", error);
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
   const handleCancelPasswordChange = () => {
+    setShowPasswordForm(false);
     setPasswordForm({
-      currentPassword: "",
+      oldPassword: "",
       newPassword: "",
       confirmPassword: "",
     });
     setPasswordErrors({});
-    setShowPasswordForm(false);
   };
 
-  const handleTwoFactorToggle = () => {
-    if (twoFactorEnabled) {
-      // Disable 2FA
-      setTwoFactorEnabled(false);
-      alert("Two-factor authentication disabled");
-    } else {
-      // Enable 2FA
-      setShowTwoFactorSetup(true);
-    }
-  };
-
-  const handleTwoFactorSetup = async () => {
-    if (!twoFactorCode || twoFactorCode.length !== 6) {
-      alert("Please enter a valid 6-digit code");
+  // Session management handlers
+  const handleRevokeSession = async (sessionId: string) => {
+    if (
+      !window.confirm(
+        "Are you sure you want to revoke this session? The device will be logged out."
+      )
+    ) {
       return;
     }
 
-    setIsSettingUpTwoFactor(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSettingUpTwoFactor(false);
-      setTwoFactorEnabled(true);
-      setShowTwoFactorSetup(false);
-      setTwoFactorCode("");
-      alert("Two-factor authentication enabled successfully!");
-    }, 2000);
+    try {
+      setRevokingSession(sessionId);
+      await revokeSession(sessionId);
+      logger.info("Session revoked successfully");
+    } catch (error) {
+      logger.error("Failed to revoke session:", error);
+      // TODO: Show error toast
+    } finally {
+      setRevokingSession(null);
+    }
+  };
+
+  const handleRevokeAllSessions = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to log out all other devices? This will revoke all sessions except the current one."
+      )
+    ) {
+      return;
+    }
+
+    try {
+      setRevokingAllSessions(true);
+      await revokeAllOtherSessions();
+      logger.info("All other sessions revoked successfully");
+    } catch (error) {
+      logger.error("Failed to revoke all sessions:", error);
+      // TODO: Show error toast
+    } finally {
+      setRevokingAllSessions(false);
+    }
+  };
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out?")) {
+      logout();
+    }
+  };
+
+  const formatLastActivity = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} minutes ago`;
+    if (diffHours < 24) return `${diffHours} hours ago`;
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
+  const getDeviceIcon = (deviceInfo: string) => {
+    const info = deviceInfo.toLowerCase();
+    if (
+      info.includes("mobile") ||
+      info.includes("android") ||
+      info.includes("iphone")
+    ) {
+      return Smartphone;
+    }
+    return Monitor;
   };
 
   return (
     <div className="space-y-6">
+      {/* Profile Information */}
       <div>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
           Profile Information
         </h3>
         <Card padding="lg" className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
-              <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          {!isEditingProfile ? (
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
+                <User className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                  {user?.displayName}
+                </h4>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
+                  {user?.email}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="primary" size="sm">
+                    Free Plan
+                  </Badge>
+                  {user?.emailVerified && (
+                    <Badge variant="success" size="sm">
+                      <Check className="w-3 h-3 mr-1" />
+                      Verified
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={Edit3}
+                onClick={handleStartEditProfile}
+                className="flex-shrink-0"
+              >
+                <span className="hidden sm:inline">Edit Profile</span>
+                <span className="sm:hidden">Edit</span>
+              </Button>
             </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-800 dark:text-gray-200">
-                User
-              </h4>
-              <p className="text-gray-500 dark:text-gray-400 text-sm">
-                user@example.com
-              </p>
-              <Badge variant="primary" size="sm" className="mt-1">
-                Free Plan
-              </Badge>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <User className="w-5 h-5 text-primary-500" />
+                <h4 className="font-medium text-gray-800 dark:text-gray-200">
+                  Edit Profile
+                </h4>
+              </div>
+
+              {profileErrors.submit && (
+                <div className="p-3 bg-red-50/80 dark:bg-red-900/20 rounded-lg border border-red-200/50 dark:border-red-700/50">
+                  <p className="text-red-800 dark:text-red-200 text-sm">
+                    {profileErrors.submit}
+                  </p>
+                </div>
+              )}
+
+              <Input
+                label="Display Name"
+                value={profileForm.displayName}
+                onChange={(e) =>
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    displayName: e.target.value,
+                  }))
+                }
+                placeholder="Enter your display name"
+                error={!!profileErrors.displayName}
+                helperText={profileErrors.displayName}
+                disabled={isUpdatingProfile}
+              />
+
+              <Input
+                label="Email Address"
+                type="email"
+                value={profileForm.email}
+                onChange={(e) =>
+                  setProfileForm((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                  }))
+                }
+                placeholder="Enter your email address"
+                error={!!profileErrors.email}
+                helperText={profileErrors.email}
+                disabled={isUpdatingProfile}
+              />
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button
+                  variant="secondary"
+                  onClick={handleCancelEditProfile}
+                  className="flex-1"
+                  disabled={isUpdatingProfile}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleUpdateProfile}
+                  disabled={isUpdatingProfile}
+                  className="flex-1"
+                >
+                  {isUpdatingProfile ? "Updating..." : "Save Changes"}
+                </Button>
+              </div>
             </div>
-            <Button variant="secondary" size="sm" className="hidden sm:block">
-              Edit Profile
-            </Button>
-          </div>
-          <Button variant="secondary" size="sm" className="w-full sm:hidden">
-            Edit Profile
-          </Button>
+          )}
         </Card>
       </div>
 
@@ -142,7 +417,10 @@ export function AccountTab() {
                   Password
                 </div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Last changed 3 months ago
+                  Last changed:{" "}
+                  {user?.updatedAt
+                    ? new Date(user.updatedAt).toLocaleDateString()
+                    : "Unknown"}
                 </div>
               </div>
               <Button
@@ -158,24 +436,33 @@ export function AccountTab() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-2 mb-4">
-                <AlertCircle className="w-5 h-5 text-primary-500" />
+                <Key className="w-5 h-5 text-primary-500" />
                 <h4 className="font-medium text-gray-800 dark:text-gray-200">
                   Change Your Password
                 </h4>
               </div>
 
+              {passwordErrors.submit && (
+                <div className="p-3 bg-red-50/80 dark:bg-red-900/20 rounded-lg border border-red-200/50 dark:border-red-700/50">
+                  <p className="text-red-800 dark:text-red-200 text-sm">
+                    {passwordErrors.submit}
+                  </p>
+                </div>
+              )}
+
               <PasswordInput
                 label="Current Password"
-                value={passwordForm.currentPassword}
+                value={passwordForm.oldPassword}
                 onChange={(e) =>
                   setPasswordForm((prev) => ({
                     ...prev,
-                    currentPassword: e.target.value,
+                    oldPassword: e.target.value,
                   }))
                 }
                 placeholder="Enter your current password"
-                error={!!passwordErrors.currentPassword}
-                helperText={passwordErrors.currentPassword}
+                error={!!passwordErrors.oldPassword}
+                helperText={passwordErrors.oldPassword}
+                disabled={isChangingPassword}
                 autoComplete="current-password"
               />
 
@@ -192,8 +479,9 @@ export function AccountTab() {
                 error={!!passwordErrors.newPassword}
                 helperText={
                   passwordErrors.newPassword ||
-                  "Must be at least 8 characters long"
+                  "Must be at least 6 characters long"
                 }
+                disabled={isChangingPassword}
                 autoComplete="new-password"
               />
 
@@ -209,6 +497,7 @@ export function AccountTab() {
                 placeholder="Confirm your new password"
                 error={!!passwordErrors.confirmPassword}
                 helperText={passwordErrors.confirmPassword}
+                disabled={isChangingPassword}
                 autoComplete="new-password"
               />
 
@@ -237,119 +526,133 @@ export function AccountTab() {
         </Card>
       </div>
 
-      {/* Two-Factor Authentication */}
+      {/* Active Sessions */}
       <div>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
-          Two-Factor Authentication
+          Active Sessions
         </h3>
         <Card padding="lg" className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-100 dark:bg-green-900/40 flex items-center justify-center flex-shrink-0">
-              <Smartphone className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                Authenticator App
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-gray-800 dark:text-gray-200">
+                Manage Sessions
               </h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                {twoFactorEnabled
-                  ? "Two-factor authentication is currently enabled. Your account is protected with an additional security layer."
-                  : "Add an extra layer of security to your account by enabling two-factor authentication using an authenticator app."}
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                View and manage devices that are currently signed in to your
+                account
               </p>
-
-              {twoFactorEnabled ? (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="success" size="sm">
-                      <Check className="w-3 h-3 mr-1" />
-                      Enabled
-                    </Badge>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Last used: 2 hours ago
-                    </span>
-                  </div>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={handleTwoFactorToggle}
-                    className="w-full sm:w-auto"
-                  >
-                    Disable Two-Factor Authentication
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="primary"
-                  onClick={handleTwoFactorToggle}
-                  className="w-full sm:w-auto"
-                >
-                  Enable Two-Factor Authentication
-                </Button>
-              )}
             </div>
+            {sessions.length > 1 && (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleRevokeAllSessions}
+                disabled={revokingAllSessions || sessionsLoading}
+                className="flex-shrink-0"
+              >
+                {revokingAllSessions ? "Revoking..." : "Revoke All Others"}
+              </Button>
+            )}
           </div>
 
-          {showTwoFactorSetup && (
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-              <h5 className="font-medium text-gray-800 dark:text-gray-200 mb-3">
-                Setup Two-Factor Authentication
-              </h5>
-              <div className="space-y-4">
-                <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    1. Download an authenticator app like Google Authenticator
-                    or Authy
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    2. Scan this QR code with your authenticator app:
-                  </p>
-                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center mb-3 mx-auto sm:mx-0">
-                    <span className="text-xs text-gray-500">QR Code</span>
+          {sessionsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                </div>
+              ))}
+            </div>
+          ) : sessions.length === 0 ? (
+            <div className="text-center py-6">
+              <Monitor className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-500 dark:text-gray-400">
+                No active sessions found
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {sessions.map((session) => {
+                const DeviceIcon = getDeviceIcon(session.deviceInfo);
+                const isRevoking = revokingSession === session._id;
+
+                return (
+                  <div
+                    key={session._id}
+                    className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
+                      session.isCurrentSession
+                        ? "bg-primary-50/50 dark:bg-primary-900/20 border-primary-200/50 dark:border-primary-700/50"
+                        : "bg-gray-50/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50"
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                      <DeviceIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h5 className="font-medium text-gray-800 dark:text-gray-200">
+                          {session.deviceInfo}
+                        </h5>
+                        {session.isCurrentSession && (
+                          <Badge variant="primary" size="sm">
+                            Current Session
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <p>IP: {session.ipAddress}</p>
+                        <p>
+                          Last activity:{" "}
+                          {formatLastActivity(session.lastActivity)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!session.isCurrentSession && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={isRevoking ? undefined : Trash2}
+                        onClick={() => handleRevokeSession(session._id)}
+                        disabled={isRevoking}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-100/50 dark:hover:bg-red-900/30"
+                      >
+                        {isRevoking ? "Revoking..." : "Revoke"}
+                      </Button>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    3. Enter the 6-digit code from your authenticator app:
-                  </p>
-                </div>
-
-                <Input
-                  label="Verification Code"
-                  type="text"
-                  value={twoFactorCode}
-                  onChange={(e) =>
-                    setTwoFactorCode(
-                      e.target.value.replace(/\D/g, "").slice(0, 6)
-                    )
-                  }
-                  placeholder="000000"
-                  className="text-center text-lg tracking-widest font-mono"
-                  maxLength={6}
-                />
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      setShowTwoFactorSetup(false);
-                      setTwoFactorCode("");
-                    }}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handleTwoFactorSetup}
-                    disabled={
-                      isSettingUpTwoFactor || twoFactorCode.length !== 6
-                    }
-                    className="flex-1"
-                  >
-                    {isSettingUpTwoFactor ? "Verifying..." : "Verify & Enable"}
-                  </Button>
-                </div>
-              </div>
+                );
+              })}
             </div>
           )}
+        </Card>
+      </div>
+
+      {/* Logout Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">
+          Account Actions
+        </h3>
+        <Card padding="lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h4 className="font-medium text-gray-800 dark:text-gray-200">
+                Sign Out
+              </h4>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Sign out of your account on this device
+              </p>
+            </div>
+            <Button
+              variant="danger"
+              icon={LogOut}
+              onClick={handleLogout}
+              className="w-full sm:w-auto"
+            >
+              Sign Out
+            </Button>
+          </div>
         </Card>
       </div>
     </div>

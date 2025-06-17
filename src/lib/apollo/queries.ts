@@ -434,11 +434,9 @@ export const GET_AVAILABLE_MODELS_QUERY = gql`
 export const GET_PREFERENCES_QUERY = gql`
   query GetPreferences {
     getPreferences {
-      timezone
       dateFormat
       language
       use24HourFormat
-      useMetricUnits
       showTimestamps
       theme
     }
@@ -448,13 +446,41 @@ export const GET_PREFERENCES_QUERY = gql`
 export const UPDATE_PREFERENCES_MUTATION = gql`
   mutation UpdatePreferences($payload: UpdatePreferencesDto!) {
     updatePreferences(payload: $payload) {
-      timezone
       dateFormat
       language
       use24HourFormat
-      useMetricUnits
       showTimestamps
       theme
     }
+  }
+`;
+
+// Sessions
+export const GET_SESSIONS_QUERY = gql`
+  query GetSessions {
+    getSessions {
+      _id
+      deviceInfo {
+        userAgent
+        ip
+        platform
+        browser
+      }
+      expiresAt
+      isActive
+      lastUsedAt
+    }
+  }
+`;
+
+export const REVOKE_SESSION_MUTATION = gql`
+  mutation RevokeSession($sessionId: String!) {
+    revokeSession(sessionId: $sessionId)
+  }
+`;
+
+export const REVOKE_ALL_SESSIONS_MUTATION = gql`
+  mutation RevokeAllSessions {
+    revokeAllSessions
   }
 `;

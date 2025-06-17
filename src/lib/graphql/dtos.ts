@@ -12,7 +12,7 @@ export interface RegisterDto {
   password: string;
 }
 
-export interface ChangePasswordDTO {
+export interface ChangePasswordDto {
   newPassword: string;
   oldPassword: string;
 }

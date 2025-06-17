@@ -8,11 +8,9 @@ import { socketManager } from "@/lib/socket/socket-client";
 // Default preferences - these won't be sent to server unless explicitly changed
 export const DEFAULT_PREFERENCES: Required<Preferences> = {
   // Localization
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   dateFormat: "MM/dd/yyyy",
   language: "en",
   use24HourFormat: false,
-  useMetricUnits: true,
 
   // UI Preferences
   showTimestamps: true,

@@ -1,7 +1,6 @@
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
-
-import { Button } from "./Button";
+import React from "react";
 
 interface DropdownOption {
   value: string;
@@ -27,82 +26,83 @@ export const Dropdown: React.FC<DropdownProps> = ({
   className = "",
   disabled = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   const selectedOption = options.find((option) => option.value === value);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   return (
-    <div ref={dropdownRef} className={`relative ${className}`}>
-      <Button
-        variant="secondary"
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className="w-full justify-between"
-      >
-        <div className="flex items-center gap-2">
-          {selectedOption?.icon && <selectedOption.icon className="w-4 h-4" />}
-          <span
-            className={
-              selectedOption
-                ? "text-gray-800 dark:text-gray-200"
-                : "text-gray-500 dark:text-gray-400"
-            }
+    <div className={className}>
+      <DropdownMenu.Root>
+        {/* Trigger Button */}
+        <DropdownMenu.Trigger asChild>
+          <button
+            disabled={disabled}
+            className="inline-flex items-center justify-between w-full px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-700 data-[state=open]:bg-gray-50 dark:data-[state=open]:bg-gray-700"
           >
-            {selectedOption?.label || placeholder}
-          </span>
-        </div>
-        <ChevronDown
-          className={`w-4 h-4 transition-transform duration-200 ${
-            isOpen ? "rotate-180" : ""
-          }`}
-        />
-      </Button>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-theme-bg-dropdown/95 backdrop-blur-md rounded-xl border border-gray-200/30 dark:border-gray-700/30 shadow-xl z-50 overflow-hidden">
-          <div className="max-h-64 overflow-y-auto">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => {
-                  onSelect(option.value);
-                  setIsOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 p-3 text-left transition-all duration-200 ${
-                  value === option.value
-                    ? "bg-theme-bg-selected text-primary-700 dark:text-primary-300"
-                    : "hover:bg-theme-bg-surface-hover text-gray-800 dark:text-gray-200"
+            <div className="flex items-center gap-2 min-w-0">
+              {selectedOption?.icon && (
+                <selectedOption.icon className="w-4 h-4 flex-shrink-0" />
+              )}
+              <span
+                className={`truncate ${
+                  selectedOption
+                    ? "text-gray-800 dark:text-gray-200"
+                    : "text-gray-500 dark:text-gray-400"
                 }`}
               >
-                {option.icon && <option.icon className="w-4 h-4" />}
-                <div className="flex-1">
-                  <div className="font-medium">{option.label}</div>
-                  {option.description && (
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                      {option.description}
-                    </div>
-                  )}
+                {selectedOption?.label || placeholder}
+              </span>
+            </div>
+            <ChevronDown className="w-4 h-4 flex-shrink-0 transition-transform duration-200 data-[state=open]:rotate-180" />
+          </button>
+        </DropdownMenu.Trigger>
+
+        {/* Dropdown Content */}
+        <DropdownMenu.Portal container={document.body}>
+          <DropdownMenu.Content
+            className="z-[10000] min-w-[8rem] overflow-hidden rounded-xl bg-theme-bg-dropdown/95 backdrop-blur-md border border-gray-200/30 dark:border-gray-700/30 shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+            sideOffset={8}
+            align="start"
+            style={{ maxHeight: "256px" }}
+          >
+            <div className="max-h-64 overflow-y-auto">
+              {options.length === 0 ? (
+                <div className="p-3 text-gray-500 dark:text-gray-400 text-sm">
+                  No options available
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+              ) : (
+                options.map((option) => {
+                  const isSelected = value === option.value;
+
+                  return (
+                    <DropdownMenu.Item
+                      key={option.value}
+                      onSelect={() => onSelect(option.value)}
+                      className={`flex items-center gap-3 p-3 text-left transition-all duration-200 cursor-pointer outline-none hover:bg-theme-bg-surface-hover focus:bg-theme-bg-surface-hover data-[highlighted]:bg-theme-bg-surface-hover ${
+                        isSelected
+                          ? "bg-theme-bg-selected text-primary-700 dark:text-primary-300"
+                          : "text-gray-800 dark:text-gray-200"
+                      }`}
+                    >
+                      {option.icon && (
+                        <option.icon className="w-4 h-4 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">
+                          {option.label}
+                        </div>
+                        {option.description && (
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
+                            {option.description}
+                          </div>
+                        )}
+                      </div>
+                    </DropdownMenu.Item>
+                  );
+                })
+              )}
+            </div>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
     </div>
   );
 };

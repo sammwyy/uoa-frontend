@@ -55,7 +55,7 @@ const themeOptions: ThemeOption[] = [
   {
     id: "candy",
     name: "Candy",
-    description: "Sweet pink pastels",
+    description: "Sweet pink pastels. Does this look familiar?",
     colors: {
       light: "linear-gradient(135deg, #f472b6, #ec4899)",
       dark: "linear-gradient(135deg, #ec4899, #db2777)",
@@ -63,8 +63,9 @@ const themeOptions: ThemeOption[] = [
   },
   {
     id: "shad",
-    name: "Monochrome",
-    description: "Pure black and white",
+    name: "Shad",
+    description:
+      "Pure black and white. The website will now look like all the others!",
     colors: {
       light: "linear-gradient(135deg, #ffffff, #f5f5f5)",
       dark: "linear-gradient(135deg, #09090b, #171717)",

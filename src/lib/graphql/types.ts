@@ -123,14 +123,28 @@ export interface MessagesResponse {
 // Preferences
 export interface Preferences {
   // Localization
-  timezone?: string;
   dateFormat?: string;
   language?: string;
   use24HourFormat?: boolean;
-  useMetricUnits?: boolean;
   // UI Preferences
   showTimestamps?: boolean;
   theme?: string;
+}
+
+// Sessions
+export interface DeviceInfo {
+  userAgent: string;
+  ip: string;
+  platform?: string;
+  browser?: string;
+}
+
+export interface Session {
+  _id: string;
+  deviceInfo: DeviceInfo;
+  expiresAt: Date;
+  isActive: boolean;
+  lastUsedAt: Date;
 }
 
 // Users

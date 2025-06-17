@@ -1,8 +1,6 @@
 import {
-  Bell,
-  Bot,
   Globe,
-  Monitor,
+  Key,
   Palette,
   Puzzle,
   Settings,
@@ -16,9 +14,7 @@ import { AccountTab } from "./tabs/AccountTab";
 import { AddonsTab } from "./tabs/AddonsTab";
 import { ApiKeysTab } from "./tabs/ApiKeysTab";
 import { AppearanceTab } from "./tabs/AppearanceTab";
-import { ClientTab } from "./tabs/ClientTab";
 import { LanguageTab } from "./tabs/LanguageTab";
-import { NotificationsTabs } from "./tabs/NotificationsTab";
 import { PrivacyTab } from "./tabs/PrivacyTab";
 
 interface SettingsModalProps {
@@ -27,34 +23,29 @@ interface SettingsModalProps {
 }
 
 const tabs = [
-  { id: "client", label: "Client", icon: Monitor },
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "language", label: "Language", icon: Globe },
-  { id: "models", label: "Models", icon: Bot },
+  { id: "apikeys", label: "API Keys", icon: Key },
   { id: "addons", label: "Addons", icon: Puzzle },
-  { id: "account", label: "Account", icon: User },
-  { id: "notifications", label: "Notifications", icon: Bell },
   { id: "privacy", label: "Privacy", icon: Shield },
+  { id: "account", label: "Account", icon: User },
 ];
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [activeTab, setActiveTab] = useState("client");
+  const [activeTab, setActiveTab] = useState("appearance");
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "client":
-        return <ClientTab />;
-
       case "appearance":
         return <AppearanceTab />;
 
       case "language":
         return <LanguageTab />;
 
-      case "models":
+      case "apikeys":
         return <ApiKeysTab />;
 
       case "addons":
@@ -62,9 +53,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case "account":
         return <AccountTab />;
-
-      case "notifications":
-        return <NotificationsTabs />;
 
       case "privacy":
         return <PrivacyTab />;

@@ -25,7 +25,6 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString(preferences.language, {
-      timeZone: preferences.timezone,
       hour12: !preferences.use24HourFormat,
       hour: "2-digit",
       minute: "2-digit",
@@ -117,8 +116,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ messages, isLoading }) => {
               p-3 sm:p-4 rounded-xl shadow-sm backdrop-blur-md
               ${
                 message.role === "user"
-                  ? "bg-gradient-to-r from-primary-500 to-secondary-500 text-white ml-auto"
-                  : "bg-white/70 dark:bg-gray-800/70 border border-gray-200/30 dark:border-gray-700/30 text-gray-800 dark:text-gray-200"
+                  ? "bg-gradient-to-r from-primary-500 to-secondary-500 text-white ml-auto shadow-lg"
+                  : "bg-white/80 dark:bg-gray-800/80 border border-gray-200/30 dark:border-gray-700/30 text-gray-800 dark:text-gray-200"
               }
             `}
             >
