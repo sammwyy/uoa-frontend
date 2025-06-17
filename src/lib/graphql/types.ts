@@ -38,6 +38,13 @@ export interface SessionResponse {
 }
 
 // Branches
+export interface ModelConfig {
+  temperature?: number;
+  maxTokens?: number;
+  apiKeyId?: string; // Optional API key ID for the model
+  modelId?: string; // Optional model ID for the model
+}
+
 export interface ChatBranch {
   _id: string;
   branchPoint: number;
@@ -45,6 +52,7 @@ export interface ChatBranch {
   messageCount: number;
   name: string;
   parentBranchId?: ChatBranch;
+  modelConfig?: ModelConfig;
 }
 
 // Chats
@@ -56,8 +64,6 @@ export interface Chat {
   lastActivityAt: string;
   pinned: boolean;
   title: string;
-  modelId?: string;
-  apiKeyId?: string;
 }
 
 export interface ChatsResponse {

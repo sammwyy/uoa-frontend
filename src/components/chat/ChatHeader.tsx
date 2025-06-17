@@ -15,7 +15,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useModels } from "@/hooks/useModels";
-import { AIModel, Chat, ChatBranch, UpdateChatDto } from "@/lib/graphql";
+import {
+  AIModel,
+  Chat,
+  ChatBranch,
+  ModelConfig,
+  UpdateChatDto,
+} from "@/lib/graphql";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
@@ -30,8 +36,6 @@ import { UserMenu } from "./UserMenu";
 interface ChatHeaderProps {
   chat: Chat;
   updateChat: (id: string, updateData: UpdateChatDto) => void;
-  onSelectModel: (model: AIModel) => void;
-  selectedModel?: AIModel | null | undefined;
   onOpenSettings: () => void;
   hideModelSelector?: boolean;
   isAuthenticated?: boolean;
@@ -44,14 +48,17 @@ interface ChatHeaderProps {
   onToggleBranches?: () => void;
   // Messages count
   messagesCount?: number;
+  // Model config
+  modelConfig: ModelConfig;
+  onChangeModelConfig: (config: ModelConfig) => void;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   chat,
   updateChat,
   branches,
-  onSelectModel,
-  selectedModel,
+  modelConfig,
+  onChangeModelConfig,
   onOpenSettings,
   hideModelSelector = false,
   isAuthenticated,
@@ -64,6 +71,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 }) => {
   const { toggle: toggleSidebar } = useSidebarStore();
   const { models } = useModels();
+  const selectedModel = models.find((m) => m.id === modelConfig.modelId);
 
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
@@ -96,6 +104,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     } else if (e.key === "Escape") {
       handleCancelEdit();
     }
+  };
+
+  const onSelectModel = (model: AIModel) => {
+    if (!chat || !isAuthenticated) return;
+    onChangeModelConfig({
+      ...modelConfig,
+      modelId: model.id,
+    });
   };
 
   const privacyOptions = [

@@ -1,16 +1,19 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChats";
-import { useModels } from "@/hooks/useModels";
 import { useTools } from "@/hooks/useTools";
 import { apolloClient } from "@/lib/apollo/apollo-client";
-import { GET_CHAT_MESSAGES_QUERY, GET_CHAT_QUERY } from "@/lib/apollo/queries";
+import {
+  GET_CHAT_MESSAGES_QUERY,
+  GET_CHAT_QUERY,
+  UPDATE_BRANCH_MUTATION,
+} from "@/lib/apollo/queries";
 import { Tools } from "@/lib/data/tools";
 import {
-  AIModel,
   Chat,
   ChatBranch,
   GetMessagesDto,
   MessagesResponse,
+  ModelConfig,
 } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { useEffect, useState } from "react";
@@ -18,7 +21,6 @@ import { LoadingScreen } from "../layout/LoadingScreen";
 import { ChatArea } from "./ChatArea";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInput } from "./ChatInput";
-import { ToolsConfig } from "./ToolsConfigModal";
 
 export interface ChatViewProps {
   chatId: string;
@@ -40,16 +42,47 @@ export function ChatView({ chatId }: ChatViewProps) {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const { toggleTool, toolStates } = useTools(Tools);
 
-  const { models } = useModels();
-  const [selectedModel, setSelectedModel] = useState(
-    models.find((m) => m.id === chat?.modelId)
-  );
-
   // Tools configuration state
-  const [toolsConfig, setToolsConfig] = useState<ToolsConfig>({
+  const [modelConfig, setModelConfig] = useState<ModelConfig>({
     temperature: 0.7,
     maxTokens: 2048,
+    apiKeyId: undefined,
+    modelId: undefined,
   });
+
+  //  Update branch
+  const updateBranch = async (
+    branchId: string,
+    updates: Partial<ChatBranch>
+  ) => {
+    if (!currentBranch) {
+      console.error("No current branch selected to update");
+      return;
+    }
+
+    const updatedBranch = { ...currentBranch, ...updates };
+    setCurrentBranch(updatedBranch);
+
+    // Update chat with new branch data
+    const { data } = await apolloClient.mutate({
+      mutation: UPDATE_BRANCH_MUTATION,
+      variables: {
+        branchId: branchId,
+        payload: updates,
+      },
+    });
+
+    if (data?.updateBranch) {
+      setBranches((prev) =>
+        prev.map((branch) =>
+          branch._id === updatedBranch._id ? updatedBranch : branch
+        )
+      );
+      logger.info("Updated branch:", updatedBranch._id);
+    } else {
+      console.error("Failed to update branch:", updatedBranch._id);
+    }
+  };
 
   // Load specific chat with branches
   const loadChat = async (chatId: string) => {
@@ -74,6 +107,13 @@ export function ChatView({ chatId }: ChatViewProps) {
         setChat(chat);
         setBranches(branches);
         setCurrentBranch(chat.defaultBranch);
+        setModelConfig({
+          temperature: 0.7,
+          maxTokens: 2048,
+          apiKeyId: undefined,
+          modelId: undefined,
+          ...chat?.defaultBranch.modelConfig,
+        });
         logger.info(`Loaded chat ${chatId} with ${branches.length} branches`);
       }
     } catch (error) {
@@ -138,9 +178,16 @@ export function ChatView({ chatId }: ChatViewProps) {
     loadChat(chatId);
   };
 
-  const onChangeModel = (model: AIModel) => {
-    setSelectedModel(model);
-    updateChat(chatId, { modelId: model.id });
+  const onChangeModelConfig = (config: ModelConfig) => {
+    if (!currentBranch) {
+      console.error("No current branch selected to update config");
+      return;
+    }
+
+    const { apiKeyId, maxTokens, modelId, temperature } = config;
+    const newConfig = { apiKeyId, maxTokens, modelId, temperature };
+    setModelConfig(newConfig);
+    updateBranch(currentBranch._id, { modelConfig: newConfig });
   };
 
   const handleSendMessage = async (message: string) => {
@@ -154,7 +201,7 @@ export function ChatView({ chatId }: ChatViewProps) {
       return;
     }
 
-    if (!selectedModel) {
+    if (!modelConfig.modelId) {
       console.error("No model selected, cannot send message");
       return;
     }
@@ -169,26 +216,25 @@ export function ChatView({ chatId }: ChatViewProps) {
       return;
     }
 
-    if (!chat.apiKeyId) {
+    if (!modelConfig.apiKeyId) {
       console.error("Chat does not have an API key, cannot send message");
       return;
     }
 
     sendMessage({
-      apiKeyId: chat.apiKeyId,
-      branchId: currentBranch?._id,
-      modelId: selectedModel.id,
+      apiKeyId: modelConfig.apiKeyId,
+      branchId: currentBranch._id,
+      modelId: modelConfig.modelId,
       prompt: message,
-      rawDecryptKey: session?.decryptKey,
+      rawDecryptKey: session.decryptKey,
     });
 
-    console.log("Sending message:", message, " with model:", selectedModel?.id);
-    console.log("Tools config:", toolsConfig);
-  };
-
-  const handleConfigChange = (config: ToolsConfig) => {
-    setToolsConfig(config);
-    console.log("Tools configuration updated:", config);
+    console.log(
+      "Sending message:",
+      message,
+      " with model:",
+      modelConfig.modelId
+    );
   };
 
   useEffect(() => {
@@ -242,8 +288,6 @@ export function ChatView({ chatId }: ChatViewProps) {
           onBranchSelect={onBranchSelect}
           onBranchesUpdated={onBranchesUpdated}
           onOpenSettings={() => {}}
-          onSelectModel={onChangeModel}
-          selectedModel={selectedModel}
           branches={branches}
           currentBranchId={currentBranch?._id}
           messagesCount={messages.total}
@@ -251,6 +295,8 @@ export function ChatView({ chatId }: ChatViewProps) {
           isAuthenticated={isAuthenticated}
           chat={chat!}
           updateChat={updateChat}
+          modelConfig={modelConfig}
+          onChangeModelConfig={onChangeModelConfig}
         />
       </div>
 
@@ -266,9 +312,8 @@ export function ChatView({ chatId }: ChatViewProps) {
           isLoading={messagesLoading}
           toggleTool={toggleTool}
           toolStates={toolStates}
-          currentModel={selectedModel}
-          onConfigChange={handleConfigChange}
-          toolsConfig={toolsConfig}
+          onChangeModelConfig={onChangeModelConfig}
+          modelConfig={modelConfig}
           placeholder={"Type your message here... (Shift+Enter for new line)"}
         />
       </div>

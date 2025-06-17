@@ -1,14 +1,15 @@
 import { Mic, Paperclip, PenTool, Send } from "lucide-react";
 import React, { useState } from "react";
 
+import { useModels } from "@/hooks/useModels";
 import { ToolState } from "@/hooks/useTools";
-import { AIModel } from "@/lib/graphql";
+import { ModelConfig } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { Textarea } from "../ui/TextArea";
 import { AudioRecordModal } from "./AudioRecordModal";
 import { DrawingModal } from "./DrawingModal";
+import { ModelConfigModal } from "./ModelConfigModal";
 import { ToolsBar } from "./ToolsBar";
-import { ToolsConfig, ToolsConfigModal } from "./ToolsConfigModal";
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void;
@@ -17,9 +18,9 @@ interface ChatInputProps {
   placeholder?: string;
   toggleTool?: (toolId: string) => void;
   toolStates?: ToolState[];
-  currentModel?: AIModel;
-  onConfigChange?: (config: ToolsConfig) => void;
-  toolsConfig?: ToolsConfig;
+  // Model config
+  modelConfig: ModelConfig;
+  onChangeModelConfig: (config: ModelConfig) => void;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -29,10 +30,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   placeholder,
   toggleTool,
   toolStates,
-  currentModel,
-  onConfigChange,
-  toolsConfig,
+  onChangeModelConfig,
+  modelConfig,
 }) => {
+  const { models } = useModels();
+  const currentModel =
+    models.find((model) => model.id === modelConfig.modelId) || null;
+
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [configModalOpen, setConfigModalOpen] = useState(false);
@@ -74,9 +78,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  const handleConfigChange = (config: ToolsConfig) => {
-    if (onConfigChange) {
-      onConfigChange(config);
+  const handleModelConfigChange = (config: ModelConfig) => {
+    if (onChangeModelConfig) {
+      onChangeModelConfig(config);
     }
   };
 
@@ -215,12 +219,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       </div>
 
       {/* Tools Configuration Modal */}
-      <ToolsConfigModal
+      <ModelConfigModal
         isOpen={configModalOpen}
         onClose={() => setConfigModalOpen(false)}
         currentModel={currentModel}
-        onConfigChange={handleConfigChange}
-        initialConfig={toolsConfig}
+        onConfigChange={handleModelConfigChange}
+        initialConfig={modelConfig}
       />
 
       {/* Drawing Modal */}

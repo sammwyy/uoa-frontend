@@ -113,6 +113,12 @@ export const GET_CHATS_QUERY = gql`
           isActive
           messageCount
           branchPoint
+          modelConfig {
+            modelId
+            apiKeyId
+            temperature
+            maxTokens
+          }
         }
       }
       hasMore
@@ -137,6 +143,12 @@ export const GET_CHAT_QUERY = gql`
           isActive
           messageCount
           branchPoint
+          modelConfig {
+            modelId
+            apiKeyId
+            temperature
+            maxTokens
+          }
         }
       }
       branches {
@@ -148,6 +160,12 @@ export const GET_CHAT_QUERY = gql`
         parentBranchId {
           _id
           name
+        }
+        modelConfig {
+          modelId
+          apiKeyId
+          temperature
+          maxTokens
         }
       }
       totalMessages
@@ -166,6 +184,12 @@ export const GET_CHAT_BRANCHES_QUERY = gql`
       parentBranchId {
         _id
         name
+      }
+      modelConfig {
+        modelId
+        apiKeyId
+        temperature
+        maxTokens
       }
     }
   }
@@ -271,13 +295,19 @@ export const CREATE_BRANCH_MUTATION = gql`
         _id
         name
       }
+      modelConfig {
+        modelId
+        apiKeyId
+        temperature
+        maxTokens
+      }
     }
   }
 `;
 
 export const UPDATE_BRANCH_MUTATION = gql`
-  mutation UpdateBranch($id: String!, $payload: UpdateBranchDto!) {
-    updateBranch(id: $id, payload: $payload) {
+  mutation UpdateBranch($branchId: String!, $payload: UpdateBranchDto!) {
+    updateBranch(branchId: $branchId, payload: $payload) {
       _id
       name
       isActive
@@ -286,6 +316,12 @@ export const UPDATE_BRANCH_MUTATION = gql`
       parentBranchId {
         _id
         name
+      }
+      modelConfig {
+        modelId
+        apiKeyId
+        temperature
+        maxTokens
       }
     }
   }

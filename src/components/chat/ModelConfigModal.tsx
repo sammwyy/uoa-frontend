@@ -2,27 +2,21 @@ import { Bot, Key, Sliders, Thermometer } from "lucide-react";
 import React, { useState } from "react";
 
 import { useApiKeys } from "@/hooks/useApiKeys";
-import { AIModel } from "@/lib/graphql";
+import { AIModel, ModelConfig } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
 import { Modal } from "../ui/Modal";
 import { Slider } from "../ui/Slider";
 
-interface ToolsConfigModalProps {
+interface ModelConfigModalProps {
   isOpen: boolean;
   onClose: () => void;
-  currentModel?: AIModel;
-  onConfigChange: (config: ToolsConfig) => void;
-  initialConfig?: ToolsConfig;
+  currentModel?: AIModel | null;
+  onConfigChange: (config: ModelConfig) => void;
+  initialConfig?: ModelConfig;
 }
 
-export interface ToolsConfig {
-  temperature: number;
-  maxTokens: number;
-  apiKeyId?: string;
-}
-
-export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
+export const ModelConfigModal: React.FC<ModelConfigModalProps> = ({
   isOpen,
   onClose,
   currentModel,
@@ -34,7 +28,7 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
 }) => {
   const { apiKeys } = useApiKeys();
 
-  const [config, setConfig] = useState<ToolsConfig>(initialConfig);
+  const [config, setConfig] = useState<ModelConfig>(initialConfig);
 
   // Filter API keys by current model's provider
   const compatibleApiKeys = apiKeys.filter(
@@ -42,7 +36,7 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
   );
 
   const handleConfigChange = (
-    key: keyof ToolsConfig,
+    key: keyof ModelConfig,
     value: number | string
   ) => {
     const newConfig = { ...config, [key]: value };
@@ -55,7 +49,7 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
   };
 
   const handleReset = () => {
-    const defaultConfig: ToolsConfig = {
+    const defaultConfig: ModelConfig = {
       temperature: 0.7,
       maxTokens: 2048,
       apiKeyId: undefined,
@@ -109,7 +103,7 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
             </h3>
           </div>
           <Slider
-            value={config.temperature}
+            value={config.temperature || 0.7}
             onChange={(value) => handleConfigChange("temperature", value)}
             min={0}
             max={2}
@@ -135,7 +129,7 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
             </h3>
           </div>
           <Slider
-            value={config.maxTokens}
+            value={config.maxTokens || 2048}
             onChange={(value) => handleConfigChange("maxTokens", value)}
             min={256}
             max={8192}
@@ -163,11 +157,6 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
           {compatibleApiKeys.length > 0 ? (
             <Dropdown
               options={[
-                {
-                  value: "",
-                  label: "Use default",
-                  description: "System default API key",
-                },
                 ...compatibleApiKeys.map((key) => ({
                   value: key._id,
                   label: key.alias,
@@ -180,9 +169,7 @@ export const ToolsConfigModal: React.FC<ToolsConfigModalProps> = ({
                 })),
               ]}
               value={config.apiKeyId || ""}
-              onSelect={(value) =>
-                handleConfigChange("apiKeyId", value || undefined)
-              }
+              onSelect={(value) => handleConfigChange("apiKeyId", value)}
               placeholder="Select API key..."
             />
           ) : (
