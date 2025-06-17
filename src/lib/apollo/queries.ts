@@ -157,10 +157,6 @@ export const GET_CHAT_QUERY = gql`
         isActive
         messageCount
         branchPoint
-        parentBranchId {
-          _id
-          name
-        }
         modelConfig {
           modelId
           apiKeyId
@@ -181,10 +177,6 @@ export const GET_CHAT_BRANCHES_QUERY = gql`
       isActive
       messageCount
       branchPoint
-      parentBranchId {
-        _id
-        name
-      }
       modelConfig {
         modelId
         apiKeyId
@@ -308,18 +300,14 @@ export const SEND_MESSAGE_MUTATION = gql`
 `;
 
 // Branch mutations
-export const CREATE_BRANCH_MUTATION = gql`
-  mutation CreateBranch($payload: CreateBranchDto!) {
-    createBranch(payload: $payload) {
+export const FORK_BRANCH_MUTATION = gql`
+  mutation ForkBranch($originalBranchId: String!, $payload: ForkBranchDto!) {
+    forkBranch(originalBranchId: $originalBranchId, payload: $payload) {
       _id
       name
       isActive
       messageCount
       branchPoint
-      parentBranchId {
-        _id
-        name
-      }
       modelConfig {
         modelId
         apiKeyId
@@ -338,10 +326,6 @@ export const UPDATE_BRANCH_MUTATION = gql`
       isActive
       messageCount
       branchPoint
-      parentBranchId {
-        _id
-        name
-      }
       modelConfig {
         modelId
         apiKeyId

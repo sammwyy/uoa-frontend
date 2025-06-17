@@ -1,4 +1,11 @@
-import { ApiKey, Chat, Message, Preferences, User } from "@/lib/graphql";
+import {
+  ApiKey,
+  Chat,
+  ChatBranch,
+  Message,
+  Preferences,
+  User,
+} from "@/lib/graphql";
 
 // App-specific types
 export interface AuthState {
@@ -52,6 +59,11 @@ export interface SocketEvents {
 
   // Preferences
   "preferences:updated": (preferences: Preferences) => void;
+
+  // Branch events
+  "branch:created": (branch: ChatBranch) => void;
+  "branch:updated": (branch: ChatBranch) => void;
+  "branch:deleted": (branch: string) => void;
 }
 
 export interface StorageConfig {

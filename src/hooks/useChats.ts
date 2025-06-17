@@ -285,7 +285,6 @@ export const useChats = () => {
   return {
     // State
     chats: store.chats,
-    currentChat: store.currentChat,
     isLoading: store.isLoading || queryLoading,
     error: store.error,
     hasMore: store.hasMore,
@@ -299,7 +298,6 @@ export const useChats = () => {
     createChat,
     updateChat,
     deleteChat,
-    setCurrentChat: store.setCurrentChat,
     clearError: store.clearError,
     sendMessage,
 

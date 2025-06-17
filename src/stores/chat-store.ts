@@ -9,7 +9,6 @@ import { indexedDB } from "@/lib/storage/indexed-db";
 interface ChatState {
   // Core state
   chats: Chat[];
-  currentChat: Chat | null;
   isLoading: boolean;
   error: string | null;
   hasMore: boolean;
@@ -29,7 +28,6 @@ interface ChatState {
   addChat: (chat: Chat) => void;
   updateChat: (chat: Chat) => void;
   removeChat: (chatId: string) => void;
-  setCurrentChat: (chat: Chat | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
@@ -46,7 +44,6 @@ export const useChatStore = create<ChatState>()(
   subscribeWithSelector((set, get) => ({
     // Initial state
     chats: [],
-    currentChat: null,
     isLoading: false,
     error: null,
     hasMore: false,
@@ -86,8 +83,6 @@ export const useChatStore = create<ChatState>()(
     updateChat: (chat: Chat) => {
       set((state) => ({
         chats: state.chats.map((c) => (c._id === chat._id ? chat : c)),
-        currentChat:
-          state.currentChat?._id === chat._id ? chat : state.currentChat,
       }));
 
       logger.debug("Updated chat:", chat._id);
@@ -97,18 +92,10 @@ export const useChatStore = create<ChatState>()(
     removeChat: (chatId: string) => {
       set((state) => ({
         chats: state.chats.filter((c) => c._id !== chatId),
-        currentChat:
-          state.currentChat?._id === chatId ? null : state.currentChat,
         total: Math.max(0, state.total - 1),
       }));
 
       logger.debug("Removed chat:", chatId);
-    },
-
-    // Set current active chat
-    setCurrentChat: (chat: Chat | null) => {
-      set({ currentChat: chat });
-      logger.debug("Set current chat:", chat?._id);
     },
 
     // Loading state
@@ -182,7 +169,6 @@ export const useChatStore = create<ChatState>()(
     reset: () => {
       set({
         chats: [],
-        currentChat: null,
         isLoading: false,
         error: null,
         hasMore: false,

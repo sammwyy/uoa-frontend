@@ -53,6 +53,7 @@ export interface ChatBranch {
   name: string;
   parentBranchId?: ChatBranch;
   modelConfig?: ModelConfig;
+  chatId?: string;
 }
 
 // Chats

@@ -1,7 +1,7 @@
 import { GitBranch, Plus } from "lucide-react";
 import React, { useState } from "react";
 
-import { CREATE_BRANCH_MUTATION } from "@/lib/apollo/queries";
+import { FORK_BRANCH_MUTATION } from "@/lib/apollo/queries";
 import { ChatBranch } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { useMutation } from "@apollo/client";
@@ -9,22 +9,19 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Modal } from "../ui/Modal";
 
-interface CreateBranchModalProps {
+interface ForkBranchModalProps {
   isOpen: boolean;
   onClose: () => void;
   chatId: string;
   currentBranch?: ChatBranch;
-  onBranchCreated: () => void;
 }
 
-export const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
+export const ForkBranchModal: React.FC<ForkBranchModalProps> = ({
   isOpen,
   onClose,
-  chatId,
   currentBranch,
-  onBranchCreated,
 }) => {
-  const [createBranchMutation] = useMutation(CREATE_BRANCH_MUTATION);
+  const [forkBranchMutation] = useMutation(FORK_BRANCH_MUTATION);
 
   const [branchName, setBranchName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -44,20 +41,19 @@ export const CreateBranchModal: React.FC<CreateBranchModalProps> = ({
 
       logger.info("Creating new branch:", branchName);
 
-      const { data } = await createBranchMutation({
+      const { data } = await forkBranchMutation({
         variables: {
+          originalBranchId: currentBranch?._id,
           payload: {
-            chatId,
             name: branchName.trim(),
-            parentBranchId: currentBranch?._id,
+            cloneMessages: true,
           },
         },
       });
 
-      if (data?.createBranch) {
+      if (data?.forkBranch) {
         setBranchName("");
         onClose();
-        onBranchCreated();
         logger.info("Branch created successfully");
       }
     } catch (error) {

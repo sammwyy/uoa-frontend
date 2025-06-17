@@ -1,11 +1,4 @@
-import {
-  Bot,
-  Lightbulb,
-  Menu,
-  MessageSquare,
-  PenTool,
-  Sparkles,
-} from "lucide-react";
+import { Bot, Menu, MessageSquare, PenTool, Sparkles } from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -19,51 +12,6 @@ import { Tools } from "@/lib/data/tools";
 import { logger } from "@/lib/logger";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { Card } from "../components/ui/Card";
-
-const suggestions = [
-  {
-    icon: "💡",
-    title: "Creative Writing",
-    description: "Help me write a story about...",
-    prompt:
-      "Help me write a creative story about a time traveler who discovers that changing the past creates parallel universes. I want it to be thought-provoking and include some scientific elements.",
-  },
-  {
-    icon: "🔧",
-    title: "Code Review",
-    description: "Review my code and suggest improvements",
-    prompt:
-      "I have a React component that's getting complex. Can you review it and suggest ways to make it more maintainable and performant?",
-  },
-  {
-    icon: "📚",
-    title: "Learning Assistant",
-    description: "Explain a complex topic in simple terms",
-    prompt:
-      "Can you explain quantum computing in simple terms? I'm a beginner but I want to understand the basic concepts and potential applications.",
-  },
-  {
-    icon: "🎯",
-    title: "Problem Solving",
-    description: "Help me brainstorm solutions",
-    prompt:
-      "I'm working on improving team productivity in a remote work environment. Can you help me brainstorm innovative solutions and best practices?",
-  },
-  {
-    icon: "✍️",
-    title: "Content Creation",
-    description: "Create engaging content for my audience",
-    prompt:
-      "Help me create engaging social media content for a tech startup. I need ideas for posts that showcase our innovation while being accessible to non-technical audiences.",
-  },
-  {
-    icon: "🔍",
-    title: "Research Assistant",
-    description: "Help me research and analyze information",
-    prompt:
-      "I'm researching sustainable energy solutions for urban environments. Can you help me analyze the pros and cons of different technologies and their feasibility?",
-  },
-];
 
 export const WelcomeView: React.FC = () => {
   const { user, isAuthenticated } = useAuth();
@@ -159,43 +107,6 @@ export const WelcomeView: React.FC = () => {
             </div>
           </div>
 
-          {/* Quick Suggestions */}
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                Popular Starting Points
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400">
-                Click any suggestion below to start a conversation, or type your
-                own message
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {suggestions.map((suggestion, index) => (
-                <Card
-                  key={index}
-                  variant="glass"
-                  padding="lg"
-                  onClick={() => handleSuggestionClick(suggestion.prompt)}
-                  className="cursor-pointer group hover:scale-[1.02] transition-all duration-200 hover:shadow-xl"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{suggestion.icon}</span>
-                      <h3 className="font-semibold text-gray-800 dark:text-gray-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                        {suggestion.title}
-                      </h3>
-                    </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                      {suggestion.description}
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-
           {/* Features Highlight */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <Card variant="glass" padding="md" className="text-center">
@@ -240,26 +151,6 @@ export const WelcomeView: React.FC = () => {
               </div>
             </Card>
           </div>
-
-          {/* Recent Activity */}
-          {isAuthenticated && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200">
-                Continue Where You Left Off
-              </h2>
-              <Card variant="glass" padding="md" className="text-center">
-                <div className="space-y-3">
-                  <Lightbulb className="w-8 h-8 text-gray-400 mx-auto" />
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Your recent conversations will appear here
-                  </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-500">
-                    Start a new conversation to see your chat history
-                  </p>
-                </div>
-              </Card>
-            </div>
-          )}
         </div>
       </div>
 

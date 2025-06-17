@@ -38,6 +38,11 @@ const SOCKET_EVENTS: {
   // User
   { event: "user:updated" },
 
+  // Branches
+  { event: "branch:created" },
+  { event: "branch:updated" },
+  { event: "branch:deleted" },
+
   // Preferences
   { event: "preferences:updated" },
 ];

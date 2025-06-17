@@ -14,8 +14,8 @@ import {
 import React, { useState } from "react";
 
 import {
-  CREATE_BRANCH_MUTATION,
   DELETE_BRANCH_MUTATION,
+  FORK_BRANCH_MUTATION,
   UPDATE_BRANCH_MUTATION,
 } from "@/lib/apollo/queries";
 import type { ChatBranch } from "@/lib/graphql";
@@ -37,7 +37,7 @@ export const BranchSelector: React.FC<BranchSelectorProps> = ({
   onBranchesUpdated,
   chatId,
 }) => {
-  const [createBranchMutation] = useMutation(CREATE_BRANCH_MUTATION);
+  const [createBranchMutation] = useMutation(FORK_BRANCH_MUTATION);
   const [updateBranchMutation] = useMutation(UPDATE_BRANCH_MUTATION);
   const [deleteBranchMutation] = useMutation(DELETE_BRANCH_MUTATION);
 

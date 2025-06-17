@@ -27,8 +27,7 @@ import { Button } from "../ui/Button";
 import { Dropdown } from "../ui/Dropdown";
 import { Input } from "../ui/Input";
 import { BranchDropdown } from "./BranchDropdown";
-import { BranchSelector } from "./ChatBranchSelector";
-import { CreateBranchModal } from "./CreateBranchModal";
+import { ForkBranchModal } from "./ForkBranchModal";
 import { MobileConfigModal } from "./MobileConfigModal";
 import { ModelSelector } from "./ModelSelector";
 import { UserMenu } from "./UserMenu";
@@ -43,7 +42,6 @@ interface ChatHeaderProps {
   branches: ChatBranch[];
   currentBranchId?: string;
   onBranchSelect: (branchId: string) => void;
-  onBranchesUpdated: () => void;
   showBranches?: boolean;
   onToggleBranches?: () => void;
   // Messages count
@@ -64,7 +62,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   isAuthenticated,
   currentBranchId,
   onBranchSelect,
-  onBranchesUpdated,
   showBranches = false,
   onToggleBranches,
 }) => {
@@ -137,10 +134,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   const handleCreateBranch = () => {
     setCreateBranchModalOpen(true);
-  };
-
-  const handleBranchCreated = () => {
-    onBranchesUpdated();
   };
 
   return (
@@ -302,19 +295,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             )}
           </div>
         </div>
-
-        {/* Branch Selector - Only show when branches are toggled on */}
-        {showBranches && isAuthenticated && chat && branches.length > 0 && (
-          <div className="border-t border-white/20 dark:border-gray-700/30 p-4">
-            <BranchSelector
-              branches={branches}
-              currentBranchId={currentBranchId}
-              onBranchSelect={onBranchSelect}
-              onBranchesUpdated={onBranchesUpdated}
-              chatId={chat._id}
-            />
-          </div>
-        )}
       </div>
 
       {/* Mobile Configuration Modal */}
@@ -327,12 +307,11 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       />
 
       {/* Create Branch Modal */}
-      <CreateBranchModal
+      <ForkBranchModal
         isOpen={createBranchModalOpen}
         onClose={() => setCreateBranchModalOpen(false)}
         chatId={chat?._id || ""}
         currentBranch={currentBranch}
-        onBranchCreated={handleBranchCreated}
       />
     </>
   );

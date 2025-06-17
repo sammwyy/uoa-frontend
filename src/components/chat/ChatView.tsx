@@ -96,6 +96,39 @@ export function ChatView({ chatId }: ChatViewProps) {
           total: prev.total + 1,
           messages: [...prev.messages, message],
         }));
+        setCurrentBranch((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            messageCount: prev.messageCount + 1,
+          };
+        });
+      },
+      "branch:created": (branch: ChatBranch) => {
+        if (branch.chatId !== chatId) {
+          return;
+        }
+
+        setBranches((prev) => [...prev, branch]);
+      },
+      "branch:updated": (branch: ChatBranch) => {
+        if (branch.chatId !== chatId) {
+          return;
+        }
+
+        setBranches((prev) =>
+          prev.map((b) => (b._id === branch._id ? branch : b))
+        );
+      },
+      "branch:deleted": (branchId: string) => {
+        setBranches((prev) => prev.filter((b) => b._id !== branchId));
+      },
+      "chat:updated": (chat: Chat) => {
+        if (chat._id !== chatId) {
+          return;
+        }
+
+        setChat(chat);
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,7 +235,7 @@ export function ChatView({ chatId }: ChatViewProps) {
       const { data, error: queryError } = await apolloClient.query({
         query: GET_CHAT_MESSAGES_QUERY,
         variables: { query: params },
-        fetchPolicy: "cache-first",
+        fetchPolicy: "no-cache",
       });
 
       if (queryError) {
@@ -236,11 +269,10 @@ export function ChatView({ chatId }: ChatViewProps) {
 
   // Handlers
   const onBranchSelect = (branchId: string) => {
-    loadMessages({ branchId }, false);
-  };
+    setSelectedBranch(branchId);
 
-  const onBranchesUpdated = () => {
-    loadChat(chatId);
+    const newBranch = branches.find((b) => b._id === branchId);
+    if (newBranch) setCurrentBranch(newBranch);
   };
 
   const onChangeModelConfig = (config: ModelConfig) => {
@@ -310,13 +342,6 @@ export function ChatView({ chatId }: ChatViewProps) {
     });
 
     setCurrentSendingMessage(null);
-    setCurrentBranch((prev) => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        messageCount: prev.messageCount + 1,
-      };
-    });
   };
 
   useEffect(() => {
@@ -372,7 +397,6 @@ export function ChatView({ chatId }: ChatViewProps) {
       <div className="sticky top-0 z-20 bg-chat-container/95 backdrop-blur-md">
         <ChatHeader
           onBranchSelect={onBranchSelect}
-          onBranchesUpdated={onBranchesUpdated}
           onOpenSettings={() => {}}
           branches={branches}
           currentBranchId={currentBranch?._id}

@@ -198,7 +198,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
 
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto px-4 pb-6">
-          {isLoading ? (
+          {isLoading && chats.length === 0 ? (
             <ChatListSkeleton count={8} />
           ) : sortedChats.length === 0 ? (
             <div className="text-center text-gray-500 dark:text-gray-400 mt-12">
