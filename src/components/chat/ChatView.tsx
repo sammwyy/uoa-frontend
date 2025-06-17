@@ -18,7 +18,8 @@ import {
 } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { socketManager } from "@/lib/socket/socket-client";
-import { useEffect, useState } from "react";
+import { createDummyMessage } from "@/lib/utils/messageUtils";
+import { useEffect, useRef, useState } from "react";
 import { LoadingScreen } from "../layout/LoadingScreen";
 import { ChatArea } from "./ChatArea";
 import { ChatHeader } from "./ChatHeader";
@@ -42,9 +43,14 @@ export function ChatView({ chatId }: ChatViewProps) {
     messages: [],
     total: -1,
   });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [messagesLoading, setMessagesLoading] = useState(false);
+
   const [currentStreamMessage, setCurrentStreamMessage] =
     useState<Message | null>(null);
+  const [currentSendingMessage, setCurrentSendingMessage] =
+    useState<Message | null>(null);
+
   const { toggleTool, toolStates } = useTools(Tools);
 
   // Tools configuration state
@@ -59,16 +65,13 @@ export function ChatView({ chatId }: ChatViewProps) {
   useEffect(() => {
     socketManager.setListeners({
       "message:start": () => {
-        setCurrentStreamMessage({
-          _id: "",
+        const dummy = createDummyMessage({
+          _id: "stream-pending",
+          branchId: currentBranch?._id,
           role: "assistant",
           content: [{ type: "text", text: "" }],
-          createdAt: new Date().toString(),
-          attachments: [],
-          branchId: "",
-          index: 0,
-          isEdited: false,
         });
+        setCurrentStreamMessage(dummy);
       },
       "message:chunk": (chunk: string) => {
         setCurrentStreamMessage((prev) => {
@@ -84,17 +87,18 @@ export function ChatView({ chatId }: ChatViewProps) {
           };
         });
       },
-      "message:end": (message: Message) => {
-        if (message) {
-          setMessages((prev) => ({
-            ...prev,
-            total: prev.total + 1,
-            messages: [...prev.messages, message],
-          }));
-        }
+      "message:end": () => {
         setCurrentStreamMessage(null);
       },
+      "message:new": (message: Message) => {
+        setMessages((prev) => ({
+          ...prev,
+          total: prev.total + 1,
+          messages: [...prev.messages, message],
+        }));
+      },
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -289,7 +293,15 @@ export function ChatView({ chatId }: ChatViewProps) {
       modelConfig.modelId
     );
 
-    const newMessage = await sendMessage({
+    const sending = createDummyMessage({
+      _id: "user-pending",
+      branchId: currentBranch._id,
+      role: "user",
+      content: [{ type: "text", text: message }],
+    });
+    setCurrentSendingMessage(sending);
+
+    await sendMessage({
       apiKeyId: modelConfig.apiKeyId,
       branchId: currentBranch._id,
       modelId: modelConfig.modelId,
@@ -297,14 +309,7 @@ export function ChatView({ chatId }: ChatViewProps) {
       rawDecryptKey: session.decryptKey,
     });
 
-    console.log("New message sent:", newMessage._id);
-
-    setMessages((prev) => ({
-      ...prev,
-      messages: [...prev.messages, newMessage],
-      total: prev.total + 1,
-    }));
-
+    setCurrentSendingMessage(null);
     setCurrentBranch((prev) => {
       if (!prev) return null;
       return {
@@ -359,8 +364,12 @@ export function ChatView({ chatId }: ChatViewProps) {
   }
 
   return (
-    <div className="w-full h-[100vh] sm:h-[95vh] bg-chat-container backdrop-blur-md rounded-none sm:rounded-3xl shadow-glass dark:shadow-glass-dark border-0 sm:border border-white/20 dark:border-gray-700/30 relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 z-20">
+    <div
+      ref={scrollContainerRef}
+      className="w-full flex flex-col h-[100vh] sm:h-[95vh] bg-chat-container backdrop-blur-md rounded-none sm:rounded-3xl shadow-glass dark:shadow-glass-dark border-0 sm:border border-white/20 dark:border-gray-700/30 relative overflow-y-auto"
+    >
+      {/* Top */}
+      <div className="sticky top-0 z-20 bg-chat-container/95 backdrop-blur-md">
         <ChatHeader
           onBranchSelect={onBranchSelect}
           onBranchesUpdated={onBranchesUpdated}
@@ -377,16 +386,19 @@ export function ChatView({ chatId }: ChatViewProps) {
         />
       </div>
 
-      {/* SCROLLABLE CONTENT AREA - Full height with padding for floating elements */}
-      <div className="h-full overflow-y-auto">
+      {/* Middle (Scrollable) */}
+      <div className="flex-1">
         <ChatArea
-          messages={[...messages.messages, currentStreamMessage]}
+          messages={messages.messages}
           isLoading={messagesLoading}
+          pendingStreamMessage={currentStreamMessage}
+          pendingSendingMessage={currentSendingMessage}
+          scrollContainerRef={scrollContainerRef}
         />
       </div>
 
-      {/* FLOATING INPUT AND TOOLS - Positioned absolutely at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 p-3 sm:p-6 space-y-3 sm:space-y-4 bg-gradient-to-t from-chat-container via-chat-container/95 to-transparent">
+      {/* Bottom */}
+      <div className="sticky bottom-0 z-20 p-3 sm:p-6 space-y-3 sm:space-y-4 bg-gradient-to-t from-chat-container via-chat-container/95 to-transparent">
         <ChatInput
           onSendMessage={handleSendMessage}
           isLoading={messagesLoading}

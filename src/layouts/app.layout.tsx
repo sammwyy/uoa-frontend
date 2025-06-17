@@ -11,7 +11,7 @@ export function AppLayout() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
-    <div className="h-screen overflow-hidden bg-theme-gradient transition-colors duration-300">
+    <div className="h-screen w-screen overflow-hidden bg-theme-gradient transition-colors duration-300">
       {/* Sidebar - Conditionally visible based on user preference */}
       {showSidebar && <Sidebar onOpenSettings={() => setSettingsOpen(true)} />}
 
@@ -21,7 +21,7 @@ export function AppLayout() {
           showSidebar ? "lg:pl-72" : ""
         }`}
       >
-        <div className="h-screen overflow-hidden flex items-center justify-center p-2 sm:p-4">
+        <div className="h-screen overflow-hidden flex items-center justify-center sm:p-4 p-0">
           <Outlet />
         </div>
       </div>

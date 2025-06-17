@@ -67,7 +67,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   onBranchesUpdated,
   showBranches = false,
   onToggleBranches,
-  messagesCount = 0,
 }) => {
   const { toggle: toggleSidebar } = useSidebarStore();
   const { models } = useModels();
@@ -147,7 +146,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   return (
     <>
       <div className="backdrop-blur-md border-b border-white/20 dark:border-gray-700/30 mx-5">
-        <div className="flex items-center justify-between p-3 sm:p-4 lg:p-6">
+        <div className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-1 sm:py-2 lg:py-3">
           {/* Left Section - Sidebar Toggle and Model Selector */}
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
             {/* Sidebar Toggle - Only show if authenticated */}
@@ -231,10 +230,8 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                       )}
                     </div>
 
-                    {/* Chat Stats and Branch Info */}
+                    {/*  Branch Info */}
                     <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                      <span>{messagesCount} messages</span>
-
                       {/* Branch Info and Toggle */}
                       {isAuthenticated &&
                         branches.length > 0 &&
@@ -252,13 +249,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                             )}
                           </button>
                         )}
-
-                      {/* Current Branch Name */}
-                      {currentBranch && isAuthenticated && (
-                        <span className="text-xs text-blue-600 dark:text-blue-400 bg-blue-100/50 dark:bg-blue-900/30 px-2 py-1 rounded-full">
-                          {currentBranch.name}
-                        </span>
-                      )}
                     </div>
                   </div>
                 )}

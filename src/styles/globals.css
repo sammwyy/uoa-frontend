@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body,
+#root {
+  height: 100%;
+  overflow: auto;
+}
+
 /* Theme: Sunset (Default) */
 .theme-default {
   --primary-50: 255 247 237;
