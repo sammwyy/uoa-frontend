@@ -70,10 +70,10 @@ const AttachmentPreview: React.FC<{
   if (size === "small") {
     // Small horizontal layout for user messages
     return (
-      <div className="group relative bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/20 hover:bg-white/20 transition-all duration-200">
+      <div className="group relative dark:bg-white/10 bg-black/30 backdrop-blur-sm rounded-lg p-2 border border-white/20 dark:hover:bg-white/20 hover:bg-black/20 transition-all duration-200">
         <div className="flex items-center gap-2">
           {/* Preview/Icon */}
-          <div className="w-8 h-8 rounded flex-shrink-0 overflow-hidden bg-white/20">
+          <div className="w-8 h-8 rounded flex-shrink-0 overflow-hidden dark:bg-white/10 bg-black/20">
             {isImage && !imageError ? (
               <img
                 src={fileUrl}
