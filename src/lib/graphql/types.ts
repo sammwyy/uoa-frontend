@@ -73,6 +73,11 @@ export interface ChatsResponse {
   total: number;
 }
 
+export interface PublicChatResponse {
+  chat: Chat;
+  messages: Message[];
+}
+
 export interface SingleChatResponse {
   branches: ChatBranch[];
   chat: Chat;

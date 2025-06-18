@@ -169,6 +169,47 @@ export const GET_CHAT_QUERY = gql`
   }
 `;
 
+export const GET_PUBLIC_CHAT_QUERY = gql`
+  query GetPublicChat($query: GetChatDto!) {
+    getPublicChat(query: $query) {
+      chat {
+        _id
+        title
+        archived
+        pinned
+        isPublic
+        lastActivityAt
+      }
+      messages {
+        _id
+        role
+        content {
+          type
+          text
+          id
+          name
+          tool_use_id
+        }
+        attachments
+        index
+        isEdited
+        editedAt
+        modelUsed
+        tokens
+        branchId
+        createdAt
+        originalContent {
+          type
+          text
+          id
+          name
+          tool_use_id
+        }
+      }
+    }
+  }
+`;
+
 export const GET_CHAT_BRANCHES_QUERY = gql`
   query GetChatBranches($chatId: String!) {
     getChatBranches(chatId: $chatId) {

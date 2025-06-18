@@ -7,6 +7,7 @@ import { apolloClient } from "@/lib/apollo/apollo-client";
 import {
   GET_CHAT_MESSAGES_QUERY,
   GET_CHAT_QUERY,
+  GET_PUBLIC_CHAT_QUERY,
   UPDATE_BRANCH_MUTATION,
 } from "@/lib/apollo/queries";
 import {
@@ -23,6 +24,7 @@ import { socketManager } from "@/lib/socket/socket-client";
 import { createDummyMessage } from "@/lib/utils/messageUtils";
 import { getToolsForModel } from "@/lib/utils/modelUtils";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { LoadingScreen } from "../layout/LoadingScreen";
 import { ChatArea } from "./ChatArea";
 import { ChatHeader } from "./ChatHeader";
@@ -46,6 +48,7 @@ export function ChatView({
   isFocus,
   onClick,
 }: ChatViewProps) {
+  const navigate = useNavigate();
   const { updateChat, sendMessage } = useChats();
   const { models } = useModels();
   const { isAuthenticated, session } = useAuth();
@@ -248,6 +251,40 @@ export function ChatView({
     }
   };
 
+  // Load public chat
+  const loadPublicChat = async (chatId: string) => {
+    setLoading(true);
+    setError(null);
+
+    logger.info("Loading public chat:", chatId);
+
+    const { data, error: queryError } = await apolloClient.query({
+      query: GET_PUBLIC_CHAT_QUERY,
+      variables: { query: { chatId } },
+      fetchPolicy: "cache-first",
+    });
+
+    if (queryError) {
+      navigate("/");
+      return;
+    }
+
+    if (data?.getPublicChat) {
+      const { chat, messages } = data.getPublicChat;
+      setChat(chat);
+      setMessages({
+        hasMore: false,
+        messages,
+        total: messages.length,
+      });
+      logger.info(
+        `Loaded public chat ${chatId} with ${branches.length} branches`
+      );
+    } else {
+      navigate("/");
+    }
+  };
+
   // Load specific chat with branches
   const loadChat = async (chatId: string) => {
     try {
@@ -284,8 +321,18 @@ export function ChatView({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load chat";
-      setError(errorMessage);
-      logger.error("Failed to load chat:", error);
+
+      const errorLower = errorMessage.toLowerCase();
+      const authErrorKeys = ["authentication", "unauthorized", "token"];
+      const isAuthError = authErrorKeys.some((key) => errorLower.includes(key));
+
+      if (isAuthError) {
+        navigate("/");
+      } else {
+        setError(errorMessage);
+      }
+
+      console.error("Failed to load chat:", error);
     } finally {
       setLoading(false);
     }
@@ -327,6 +374,7 @@ export function ChatView({
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to load messages";
+
       setError(errorMessage);
       logger.error("Failed to load messages:", error);
     } finally {
@@ -431,10 +479,16 @@ export function ChatView({
 
   useEffect(() => {
     setMessages({ hasMore: false, messages: [], total: -1 });
+
     setTimeout(() => {
-      loadChat(chatId);
+      if (isAuthenticated) {
+        loadChat(chatId);
+      } else {
+        loadPublicChat(chatId);
+      }
     }, 1);
-  }, [chatId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId, isAuthenticated]);
 
   useEffect(() => {
     console.log("Current branch:", selectedBranch);

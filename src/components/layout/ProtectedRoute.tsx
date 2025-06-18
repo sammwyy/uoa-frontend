@@ -28,7 +28,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (
+    !isAuthenticated &&
+    location.pathname !== "/auth" &&
+    !location.pathname.startsWith("/c/")
+  ) {
     // Redirect to auth page with the current location
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
