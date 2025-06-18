@@ -48,6 +48,7 @@ export interface AddMessageDto {
   modelId: string;
   prompt: string;
   rawDecryptKey: string;
+  attachments: string[];
 }
 
 export interface UpdateChatDto {

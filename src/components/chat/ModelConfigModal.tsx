@@ -1,5 +1,5 @@
 import { Bot, Key, Sliders, Thermometer } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { useApiKeys } from "@/hooks/useApiKeys";
 import { AIModel, ModelConfig } from "@/lib/graphql";
@@ -29,6 +29,10 @@ export const ModelConfigModal: React.FC<ModelConfigModalProps> = ({
   const { apiKeys } = useApiKeys();
 
   const [config, setConfig] = useState<ModelConfig>(initialConfig);
+
+  useEffect(() => {
+    setConfig(initialConfig);
+  }, [initialConfig]);
 
   // Filter API keys by current model's provider
   const compatibleApiKeys = apiKeys.filter(

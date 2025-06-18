@@ -18,8 +18,16 @@ interface DrawingTool {
 }
 
 const colors = [
-  "#000000", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", 
-  "#FF00FF", "#00FFFF", "#FFA500", "#800080", "#FFC0CB"
+  "#000000",
+  "#FF0000",
+  "#00FF00",
+  "#0000FF",
+  "#FFFF00",
+  "#FF00FF",
+  "#00FFFF",
+  "#FFA500",
+  "#800080",
+  "#FFC0CB",
 ];
 
 export const DrawingModal: React.FC<DrawingModalProps> = ({
@@ -43,11 +51,11 @@ export const DrawingModal: React.FC<DrawingModalProps> = ({
         // Set canvas size
         canvas.width = 800;
         canvas.height = 600;
-        
+
         // Set white background
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
+
         // Set initial drawing settings
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
@@ -55,19 +63,31 @@ export const DrawingModal: React.FC<DrawingModalProps> = ({
     }
   }, [isOpen]);
 
+  // Función para obtener las coordenadas correctas del mouse
+  const getMousePos = (
+    canvas: HTMLCanvasElement,
+    e: React.MouseEvent<HTMLCanvasElement>
+  ) => {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    };
+  };
+
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
+    const pos = getMousePos(canvas, e);
     const ctx = canvas.getContext("2d");
     if (ctx) {
       setIsDrawing(true);
       ctx.beginPath();
-      ctx.moveTo(x, y);
+      ctx.moveTo(pos.x, pos.y);
     }
   };
 
@@ -77,28 +97,38 @@ export const DrawingModal: React.FC<DrawingModalProps> = ({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
+    const pos = getMousePos(canvas, e);
     const ctx = canvas.getContext("2d");
     if (ctx) {
       if (tool.type === "eraser") {
-        ctx.globalCompositeOperation = "destination-out";
-        ctx.lineWidth = tool.size * 2;
+        const currentCompositeOperation = ctx.globalCompositeOperation;
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, tool.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = currentCompositeOperation;
       } else {
         ctx.globalCompositeOperation = "source-over";
         ctx.strokeStyle = tool.color;
         ctx.lineWidth = tool.size;
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pos.x, pos.y);
       }
-
-      ctx.lineTo(x, y);
-      ctx.stroke();
     }
   };
 
   const stopDrawing = () => {
     setIsDrawing(false);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.beginPath();
+      }
+    }
   };
 
   const clearCanvas = () => {
@@ -228,15 +258,21 @@ export const DrawingModal: React.FC<DrawingModalProps> = ({
         </div>
 
         {/* Canvas */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white">
+        <div className="overflow-hidden flex items-center justify-center">
           <canvas
             ref={canvasRef}
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
-            className="block cursor-crosshair max-w-full h-auto"
-            style={{ maxHeight: "400px" }}
+            className="block cursor-crosshair"
+            style={{
+              width: "600px",
+              height: "450px", // Mantiene el aspect ratio 4:3
+              maxWidth: "100%",
+              maxHeight: "450px",
+              touchAction: "none",
+            }}
           />
         </div>
 
@@ -250,11 +286,7 @@ export const DrawingModal: React.FC<DrawingModalProps> = ({
           >
             Download
           </Button>
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="flex-1"
-          >
+          <Button variant="secondary" onClick={onClose} className="flex-1">
             Cancel
           </Button>
           <Button
@@ -265,19 +297,6 @@ export const DrawingModal: React.FC<DrawingModalProps> = ({
           >
             Send Drawing
           </Button>
-        </div>
-
-        {/* Instructions */}
-        <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50/50 dark:bg-gray-800/50 p-3 rounded-lg">
-          <p className="mb-1">
-            <strong>Drawing Tips:</strong>
-          </p>
-          <ul className="space-y-1 list-disc list-inside">
-            <li>Click and drag to draw on the canvas</li>
-            <li>Use the eraser tool to remove parts of your drawing</li>
-            <li>Adjust brush size for fine details or bold strokes</li>
-            <li>Your drawing will be attached to your message when sent</li>
-          </ul>
         </div>
       </div>
     </Modal>

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ChatInput } from "@/components/chat/ChatInput";
+import { FileAttachment } from "@/components/chat/FileAttachmentList";
 import { ModelSelector } from "@/components/chat/ModelSelector";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +22,7 @@ export const WelcomeView: React.FC = () => {
   const { toggle: toggleSidebar } = useSidebarStore();
   const { createChat } = useChats();
   const { toggleTool, toolStates } = useTools(Tools);
+  const [attachments, setAttachments] = useState<FileAttachment[]>([]);
 
   const navigate = useNavigate();
 
@@ -78,6 +80,7 @@ export const WelcomeView: React.FC = () => {
             modelId: selectedModel?.id,
             apiKeyId: dummyNewBranch.modelConfig?.apiKeyId,
             rawDecryptKey: session?.decryptKey,
+            attachments: attachments.map((a) => a.upload?._id),
           })
         );
 
@@ -217,6 +220,8 @@ export const WelcomeView: React.FC = () => {
               },
             }));
           }}
+          attachments={attachments}
+          setAttachments={setAttachments}
         />
 
         {!isAuthenticated && (

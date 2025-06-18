@@ -119,7 +119,7 @@ export class FileUploadClient {
     // Prepare headers
     const headers: Record<string, string> = {};
     if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`;
+      headers["Authorization"] = `Bearer ${this.getToken()}`;
     }
 
     onStart?.();
@@ -144,9 +144,9 @@ export class FileUploadClient {
         throw new Error(error.message);
       }
 
-      const result: UploadResponse = await response.json();
-      onSuccess?.(result);
-      return result;
+      const result: { file: UploadResponse } = await response.json();
+      onSuccess?.(result.file);
+      return result.file;
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === "AbortError") {

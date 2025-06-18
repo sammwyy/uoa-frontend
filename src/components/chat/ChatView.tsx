@@ -26,6 +26,7 @@ import { LoadingScreen } from "../layout/LoadingScreen";
 import { ChatArea } from "./ChatArea";
 import { ChatHeader } from "./ChatHeader";
 import { ChatInput } from "./ChatInput";
+import { FileAttachment } from "./FileAttachmentList";
 
 export interface ChatViewProps {
   chatId: string;
@@ -45,6 +46,7 @@ export function ChatView({ chatId }: ChatViewProps) {
     messages: [],
     total: -1,
   });
+  const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [messagesLoading, setMessagesLoading] = useState(false);
 
@@ -350,6 +352,7 @@ export function ChatView({ chatId }: ChatViewProps) {
   };
 
   const handleSendMessage = async (message: string) => {
+    console.log(attachments);
     // ToDo: Damn...
     sendMessageServer({
       prompt: message,
@@ -357,6 +360,7 @@ export function ChatView({ chatId }: ChatViewProps) {
       branchId: selectedBranch!,
       modelId: modelConfig.modelId!,
       rawDecryptKey: session?.decryptKey as string,
+      attachments: attachments.map((a) => a.upload?._id || ""),
     });
   };
 
@@ -447,6 +451,8 @@ export function ChatView({ chatId }: ChatViewProps) {
           onChangeModelConfig={onChangeModelConfig}
           modelConfig={modelConfig}
           placeholder={"Type your message here... (Shift+Enter for new line)"}
+          attachments={attachments}
+          setAttachments={setAttachments}
         />
       </div>
     </div>

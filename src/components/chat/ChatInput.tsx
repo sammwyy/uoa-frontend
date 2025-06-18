@@ -1,18 +1,22 @@
 import { Mic, Paperclip, PenTool, Send } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { useModels } from "@/hooks/useModels";
 import { ToolState } from "@/hooks/useTools";
 import { ModelConfig } from "@/lib/graphql";
+import { LocalStorage } from "@/lib/storage/local-storage";
+import { FileUploadClient } from "@/lib/utils/fileUploadUtils";
 import { Button } from "../ui/Button";
 import { Textarea } from "../ui/TextArea";
 import { AudioRecordModal } from "./AudioRecordModal";
 import { DrawingModal } from "./DrawingModal";
+import { FileAttachment, FileAttachmentList } from "./FileAttachmentList";
+import { FileViewModal } from "./FileViewModal";
 import { ModelConfigModal } from "./ModelConfigModal";
 import { ToolsBar } from "./ToolsBar";
 
 interface ChatInputProps {
-  onSendMessage: (content: string) => void;
+  onSendMessage: (content: string, attachments?: FileAttachment[]) => void;
   isLoading: boolean;
   disabled?: boolean;
   placeholder?: string;
@@ -21,7 +25,14 @@ interface ChatInputProps {
   // Model config
   modelConfig: ModelConfig;
   onChangeModelConfig: (config: ModelConfig) => void;
+  // Attachments
+  attachments: FileAttachment[];
+  setAttachments: React.Dispatch<React.SetStateAction<FileAttachment[]>>;
 }
+
+const generateFileId = () => {
+  return `file-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSendMessage,
@@ -32,6 +43,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   toolStates,
   onChangeModelConfig,
   modelConfig,
+  attachments,
+  setAttachments,
 }) => {
   const { models } = useModels();
   const currentModel =
@@ -42,12 +55,48 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [drawingModalOpen, setDrawingModalOpen] = useState(false);
   const [audioModalOpen, setAudioModalOpen] = useState(false);
+  const [fileViewModal, setFileViewModal] = useState<{
+    isOpen: boolean;
+    attachment: FileAttachment | null;
+  }>({ isOpen: false, attachment: null });
+
+  // File attachments state
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
+
+  // File upload client
+  const fileUploadClient = useRef<FileUploadClient | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize file upload client
+  useEffect(() => {
+    fileUploadClient.current = new FileUploadClient({
+      baseUrl: import.meta.env.VITE_UPLOAD_API || "http://localhost:3000",
+      token: () => {
+        const tokens = LocalStorage.getAuthTokens();
+        return tokens.accessToken || "";
+      },
+    });
+  }, []);
+
+  // Process files when filesToUpload changes
+  useEffect(() => {
+    if (filesToUpload.length > 0) {
+      handleFilesAdded(filesToUpload);
+      setFilesToUpload([]); // Clear after processing
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filesToUpload]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (message.trim() && !isLoading) {
-      onSendMessage(message.trim());
+    if ((message.trim() || attachments.length > 0) && !isLoading) {
+      // Only send completed attachments
+      const completedAttachments = attachments.filter(
+        (att) => att.status === "completed"
+      );
+      onSendMessage(message.trim(), completedAttachments);
       setMessage("");
+      setAttachments([]); // Clear attachments after sending
     }
   };
 
@@ -73,9 +122,135 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setIsDragging(false);
     const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      console.log("Files dropped:", files);
-      // TODO: Handle file uploads
+      handleFilesAdded(files);
     }
+  };
+
+  // Handle paste events for files
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "file") {
+          const file = item.getAsFile();
+          if (file) {
+            files.push(file);
+          }
+        }
+      }
+
+      if (files.length > 0) {
+        e.preventDefault();
+        handleFilesAdded(files);
+      }
+    };
+
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAttachmentAdded = async (newAttachment: FileAttachment) => {
+    if (!fileUploadClient.current) return;
+
+    let file = newAttachment.file;
+
+    if (!file) {
+      //  Convert base64 data to file.
+      const response = await fetch(newAttachment.data!);
+      const blob = await response.blob();
+      file = new File([blob], "upload.png", { type: blob.type });
+    }
+
+    setAttachments((prev) => [...prev, newAttachment]);
+
+    try {
+      // Upload the file
+      const uploadResponse = await fileUploadClient.current.upload(file, {
+        onProgress: (progress) => {
+          setAttachments((prev) =>
+            prev.map((att) =>
+              att.id === newAttachment.id
+                ? { ...att, progress: progress.percentage }
+                : att
+            )
+          );
+        },
+      });
+
+      // Update attachment with completed upload
+      setAttachments((prev) =>
+        prev.map((att) =>
+          att.id === newAttachment.id
+            ? {
+                ...att,
+                status: "completed" as const,
+                upload: uploadResponse.file,
+                progress: 100,
+              }
+            : att
+        )
+      );
+    } catch (error) {
+      // Update attachment with error status
+      setAttachments((prev) =>
+        prev.map((att) =>
+          att.id === newAttachment.id
+            ? {
+                ...att,
+                status: "error" as const,
+                error: error instanceof Error ? error.message : "Upload failed",
+              }
+            : att
+        )
+      );
+    }
+  };
+
+  const handleFilesAdded = async (files: File[]) => {
+    if (!fileUploadClient.current) return;
+
+    for (const file of files) {
+      const fileId = generateFileId();
+
+      // Add file to attachments with uploading status
+      const newAttachment: FileAttachment = {
+        id: fileId,
+        file,
+        status: "uploading",
+        progress: 0,
+        type: "file",
+      };
+
+      await handleAttachmentAdded(newAttachment);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      handleFilesAdded(files);
+    }
+    // Reset input to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleAttachFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleRemoveAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((att) => att.id !== id));
+  };
+
+  const handleViewAttachment = (attachment: FileAttachment) => {
+    setFileViewModal({ isOpen: true, attachment });
   };
 
   const handleModelConfigChange = (config: ModelConfig) => {
@@ -85,19 +260,31 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   const handleDrawingSave = (imageData: string) => {
-    console.log("Drawing saved:", imageData);
-    // TODO: Handle drawing attachment
-    // For now, we'll add a placeholder message
-    setMessage((prev) => prev + (prev ? "\n\n" : "") + "[Drawing attached]");
+    const drawingId = generateFileId();
+    const newAttachment: FileAttachment = {
+      id: drawingId,
+      status: "completed",
+      type: "drawing",
+      data: imageData,
+      name: `Drawing ${new Date().toLocaleTimeString()}`,
+    };
+
+    handleAttachmentAdded(newAttachment);
   };
 
   const handleAudioSave = (audioBlob: Blob) => {
-    console.log("Audio saved:", audioBlob);
-    // TODO: Handle audio attachment
-    // For now, we'll add a placeholder message
-    setMessage(
-      (prev) => prev + (prev ? "\n\n" : "") + "[Audio recording attached]"
-    );
+    const audioId = generateFileId();
+    const audioUrl = URL.createObjectURL(audioBlob);
+
+    const newAttachment: FileAttachment = {
+      id: audioId,
+      status: "completed",
+      type: "audio",
+      data: audioUrl,
+      name: `Recording ${new Date().toLocaleTimeString()}`,
+    };
+
+    handleAttachmentAdded(newAttachment);
   };
 
   return (
@@ -123,6 +310,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </div>
         )}
 
+        {/* File Attachments List */}
+        <FileAttachmentList
+          attachments={attachments}
+          onRemove={handleRemoveAttachment}
+          onView={handleViewAttachment}
+        />
+
         <form
           onSubmit={handleSubmit}
           className="relative flex flex-col gap-2 bg-theme-bg-input/90 backdrop-blur-md rounded-2xl border border-gray-200/30 dark:border-gray-700/30 shadow-lg sm:px-4 py-1 sm:py-2"
@@ -135,6 +329,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 size="md"
                 icon={Paperclip}
                 type="button"
+                onClick={handleAttachFileClick}
                 className="p-2.5"
                 title="Attach file"
               />
@@ -160,6 +355,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
             {/* Mobile action buttons */}
             <div className="flex sm:hidden align-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={Paperclip}
+                type="button"
+                onClick={handleAttachFileClick}
+                className="p-2"
+                title="Attach file"
+              />
               <Button
                 variant="ghost"
                 size="sm"
@@ -201,7 +405,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               size="md"
               icon={Send}
               type="submit"
-              disabled={!message.trim() || isLoading || disabled}
+              disabled={
+                (!message.trim() && attachments.length === 0) ||
+                isLoading ||
+                disabled
+              }
               className="p-2 sm:p-2.5 flex-shrink-0"
               title="Send message"
             />
@@ -216,6 +424,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             />
           )}
         </form>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          onChange={handleFileInputChange}
+          className="hidden"
+          accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.txt,.csv,.json"
+        />
       </div>
 
       {/* Tools Configuration Modal */}
@@ -239,6 +457,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         isOpen={audioModalOpen}
         onClose={() => setAudioModalOpen(false)}
         onSave={handleAudioSave}
+      />
+
+      {/* File View Modal */}
+      <FileViewModal
+        isOpen={fileViewModal.isOpen}
+        onClose={() => setFileViewModal({ isOpen: false, attachment: null })}
+        attachment={fileViewModal.attachment}
       />
     </div>
   );
