@@ -207,13 +207,10 @@ export const ModelConfigModal: React.FC<ModelConfigModalProps> = ({
           </p>
           <ul className="space-y-1 list-disc list-inside">
             <li>
-              Lower temperature (0.1-0.3) for factual, consistent responses
+              Lower temperature (0.1-0.3) for factual, consistent responses,
+              Higher temperature (0.8-1.2) for creative, varied responses.
             </li>
-            <li>Higher temperature (0.8-1.2) for creative, varied responses</li>
             <li>Increase max tokens for longer, more detailed responses</li>
-            <li>
-              Custom API keys allow you to use your own rate limits and billing
-            </li>
           </ul>
         </div>
       </div>

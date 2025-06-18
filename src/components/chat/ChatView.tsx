@@ -501,8 +501,6 @@ export function ChatView({ chatId }: ChatViewProps) {
           isLoading={messagesLoading}
           toggleTool={toggleTool}
           toolStates={toolStates}
-          onChangeModelConfig={onChangeModelConfig}
-          modelConfig={modelConfig}
           placeholder={"Type your message here... (Shift+Enter for new line)"}
           attachments={attachments}
           setAttachments={setAttachments}

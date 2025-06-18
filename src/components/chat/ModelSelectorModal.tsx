@@ -2,12 +2,19 @@ import {
   Bot,
   Building2,
   Check,
+  Code2,
+  FunctionSquare,
+  GlobeIcon,
   Grid,
+  ImageDownIcon,
+  ImageUpIcon,
   Key,
   List,
+  PlusSquareIcon,
   Search,
   SortAsc,
   SortDesc,
+  TextIcon,
   X,
   Zap,
   ZapOff,
@@ -27,12 +34,63 @@ type SortOption = "name" | "provider" | "cost" | "speed";
 type ViewMode = "list" | "grid";
 
 const categories = [
-  { id: "all", name: "All Models", icon: Bot },
-  { id: "text", name: "Text Generation", icon: Bot },
-  { id: "code", name: "Code Assistant", icon: Bot },
-  { id: "image", name: "Image Generation", icon: Bot },
-  { id: "multimodal", name: "Multimodal", icon: Bot },
-  { id: "embedding", name: "Embeddings", icon: Bot },
+  {
+    id: "all",
+    name: "All Models",
+    icon: Bot,
+    predicate: () => true,
+  },
+  {
+    id: "text",
+    name: "Text Generation",
+    icon: TextIcon,
+    predicate: (model: AIModel) => model?.capabilities?.textGeneration,
+  },
+  {
+    id: "image",
+    name: "Image Generation",
+    icon: ImageDownIcon,
+    predicate: (model: AIModel) => model?.capabilities?.imageGeneration,
+  },
+  {
+    id: "image-analysis",
+    name: "Image Analysis",
+    icon: ImageUpIcon,
+    predicate: (model: AIModel) => model?.capabilities?.imageAnalysis,
+  },
+  {
+    id: "code-execution",
+    name: "Code Execution",
+    icon: Code2,
+    predicate: (model: AIModel) => model?.capabilities?.codeExecution,
+  },
+  {
+    id: "web-browsing",
+    name: "Web Browsing",
+    icon: GlobeIcon,
+    predicate: (model: AIModel) => model?.capabilities?.webBrowsing,
+  },
+  {
+    id: "function-calling",
+    name: "Function Calling/MCP",
+    icon: FunctionSquare,
+    predicate: (model: AIModel) => model?.capabilities?.functionCalling,
+  },
+  {
+    id: "multimodal",
+    name: "Multimodal",
+    icon: PlusSquareIcon,
+    predicate: (model: AIModel) => {
+      let caps = 0;
+
+      if (model.capabilities.fileAnalysis) caps++;
+      if (model.capabilities.imageAnalysis) caps++;
+      if (model.capabilities.imageGeneration) caps++;
+      if (model.capabilities.textGeneration) caps++;
+
+      return caps > 1;
+    },
+  },
 ];
 
 interface ModelSelectorModalProps {

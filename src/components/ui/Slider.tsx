@@ -120,9 +120,9 @@ export const Slider: React.FC<SliderProps> = ({
 
   if (label || description || showValue) {
     return (
-      <div className="space-y-2">
-        {(label || showValue) && (
-          <div className="flex items-center justify-between">
+      <div className="space-y-2 pb-4">
+        {(label || showValue || description) && (
+          <div className="flex items-center justify-between gap-2">
             {label && (
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 {label}
@@ -133,14 +133,16 @@ export const Slider: React.FC<SliderProps> = ({
                 {displayValue}
               </span>
             )}
+
+            {description && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {description}
+              </p>
+            )}
           </div>
         )}
+
         {SliderComponent}
-        {description && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {description}
-          </p>
-        )}
       </div>
     );
   }

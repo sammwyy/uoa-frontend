@@ -1,9 +1,7 @@
 import { Mic, Paperclip, PenTool, Send } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
-import { useModels } from "@/hooks/useModels";
 import { ToolState } from "@/hooks/useTools";
-import { ModelConfig } from "@/lib/graphql";
 import { LocalStorage } from "@/lib/storage/local-storage";
 import { FileUploadClient } from "@/lib/utils/fileUploadUtils";
 import { Button } from "../ui/Button";
@@ -21,9 +19,6 @@ interface ChatInputProps {
   placeholder?: string;
   toggleTool?: (toolId: string) => void;
   toolStates?: ToolState[];
-  // Model config
-  modelConfig: ModelConfig;
-  onChangeModelConfig: (config: ModelConfig) => void;
   // Attachments
   attachments: FileAttachment[];
   setAttachments: React.Dispatch<React.SetStateAction<FileAttachment[]>>;
@@ -42,16 +37,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   placeholder,
   toggleTool,
   toolStates,
-  onChangeModelConfig,
-  modelConfig,
   attachments,
   setAttachments,
   error,
 }) => {
-  const { models } = useModels();
-  const currentModel =
-    models.find((model) => model.id === modelConfig?.modelId) || null;
-
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [drawingModalOpen, setDrawingModalOpen] = useState(false);
@@ -283,10 +272,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   // Check if send button should be disabled
-  const isSendDisabled = 
-    (!message.trim() && attachments.length === 0) || 
-    isLoading || 
-    disabled || 
+  const isSendDisabled =
+    (!message.trim() && attachments.length === 0) ||
+    isLoading ||
+    disabled ||
     !!error;
 
   return (
@@ -332,9 +321,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           onSubmit={handleSubmit}
           className="relative flex flex-col gap-2 bg-theme-bg-input/90 backdrop-blur-md rounded-2xl border border-gray-200/30 dark:border-gray-700/30 shadow-lg sm:px-4 py-1 sm:py-2"
         >
-          <div className="flex items-end justify-center gap-2 sm:gap-3 px-3">
+          <div className="flex sm:flex-row flex-col-reverse items-end justify-center gap-2 sm:gap-3 px-3">
             {/* Action buttons - Hidden on mobile to save space */}
-            <div className="hidden sm:flex align-center gap-2">
+            <div className="flex align-center gap-2">
               <Button
                 variant="ghost"
                 size="md"
@@ -362,47 +351,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 type="button"
                 onClick={() => setDrawingModalOpen(true)}
                 className="p-2.5"
-                title="Draw"
-                disabled={disabled || !!error}
-              />
-            </div>
-
-            {/* Mobile action buttons */}
-            <div className="flex sm:hidden align-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={Paperclip}
-                type="button"
-                onClick={handleAttachFileClick}
-                className="p-2"
-                title="Attach file"
-                disabled={disabled || !!error}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={Mic}
-                type="button"
-                onClick={() => setAudioModalOpen(true)}
-                className="p-2"
-                title="Record audio"
-                disabled={disabled || !!error}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                icon={PenTool}
-                type="button"
-                onClick={() => setDrawingModalOpen(true)}
-                className="p-2"
                 title="Draw"
                 disabled={disabled || !!error}
               />
             </div>
 
             {/* Text input */}
-            <div className="flex-1">
+            <div className="flex items-end justify-center w-full">
               <Textarea
                 variant="ghost"
                 autoResize
@@ -412,22 +367,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 placeholder={placeholder}
                 disabled={isLoading || disabled || !!error}
                 rows={1}
-                className="min-h-[24px] max-h-[240px] leading-6"
+                className="min-h-[24px] max-h-[240px] w-full leading-6 flex-1 mb-2"
                 error={!!error}
               />
-            </div>
 
-            <div className="flex items-center">
-              {/* Send button */}
-              <Button
-                variant="primary"
-                size="md"
-                icon={Send}
-                type="submit"
-                disabled={isSendDisabled}
-                className="p-2 sm:p-2.5 flex-shrink-0"
-                title={error ? "Fix configuration errors to send" : "Send message"}
-              />
+              <div className="flex items-center">
+                {/* Send button */}
+                <Button
+                  variant="primary"
+                  size="md"
+                  icon={Send}
+                  type="submit"
+                  disabled={isSendDisabled}
+                  className="p-2 sm:p-2.5 flex-shrink-0"
+                  title={
+                    error ? "Fix configuration errors to send" : "Send message"
+                  }
+                />
+              </div>
             </div>
           </div>
 

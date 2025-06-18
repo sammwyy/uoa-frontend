@@ -23,13 +23,11 @@ export const UserMenu: React.FC<UserMenuProps> = ({ onOpenSettings }) => {
     <div className="relative">
       <Button
         variant="primary"
-        size="md"
+        size="sm"
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-full"
+        className="rounded-full"
       >
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-          <UserIcon className="w-4 h-4 text-white" />
-        </div>
+        <UserIcon className="w-4 h-4 text-white" />
       </Button>
 
       {isOpen && (
