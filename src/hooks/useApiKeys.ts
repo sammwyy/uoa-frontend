@@ -15,6 +15,7 @@ import type { CreateApiKeyDto, UpdateApiKeyDto } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { useApiKeyStore } from "@/stores/api-key-store";
 import { useConnectionStore } from "@/stores/connection-store";
+import { useModels } from "./useModels";
 
 export const useApiKeys = () => {
   const {
@@ -30,6 +31,8 @@ export const useApiKeys = () => {
     clearError,
     syncWithOfflineData,
   } = useApiKeyStore();
+
+  const { forceSyncWithServer } = useModels();
 
   const { isOnline } = useConnectionStore();
 
@@ -105,6 +108,7 @@ export const useApiKeys = () => {
 
       if (data?.addApiKey) {
         addApiKey(data.addApiKey);
+        forceSyncWithServer();
         logger.info("API key created successfully:", data.addApiKey._id);
         return data.addApiKey;
       } else {
@@ -165,6 +169,7 @@ export const useApiKeys = () => {
 
       if (data?.deleteApiKey) {
         removeApiKey(id);
+        forceSyncWithServer();
         logger.info("API key deleted successfully:", id);
         return true;
       } else {

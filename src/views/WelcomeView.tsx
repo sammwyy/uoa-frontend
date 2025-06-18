@@ -60,7 +60,7 @@ export const WelcomeView: React.FC = () => {
     }
 
     if (!modelConfig?.apiKeyId) {
-      return "Please configure an API key in settings to use this model";
+      return "Please select an API key to use in model settings (Next to model selector)";
     }
 
     if (!session?.decryptKey) {
@@ -284,8 +284,6 @@ export const WelcomeView: React.FC = () => {
               : "Sign in to start chatting with AI..."
           }
           disabled={!isAuthenticated}
-          modelConfig={modelConfig}
-          onChangeModelConfig={handleModelConfigChange}
           attachments={attachments}
           setAttachments={setAttachments}
           error={getChatInputError()}

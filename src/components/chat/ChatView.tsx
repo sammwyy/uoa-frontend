@@ -83,7 +83,7 @@ export function ChatView({ chatId }: ChatViewProps) {
     }
 
     if (!modelConfig.apiKeyId) {
-      return "Please configure an API key in settings to use this model";
+      return "Please select an API key to use in model settings (Next to model selector)";
     }
 
     if (!session?.decryptKey) {

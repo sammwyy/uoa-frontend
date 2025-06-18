@@ -21,7 +21,7 @@ export const FileViewModal: React.FC<FileViewModalProps> = ({
   const handleDownload = () => {
     if (attachment.type === "file" && attachment.upload?._id) {
       // Download uploaded file
-      const downloadUrl = `${import.meta.env.VITE_UPLOAD_API}/download/${
+      const downloadUrl = `${import.meta.env.VITE_UPLOAD_API}/files/download/${
         attachment.upload._id
       }`;
       const link = document.createElement("a");

@@ -1,4 +1,12 @@
-import { Download, Eye, FileText, Image, Music, Palette, X } from "lucide-react";
+import {
+  Download,
+  Eye,
+  FileText,
+  Image,
+  Music,
+  Palette,
+  X,
+} from "lucide-react";
 import React from "react";
 
 import { FileUpload } from "@/lib/graphql";
@@ -34,18 +42,18 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
     if (attachment.type === "drawing") {
       return <Palette className="w-4 h-4" />;
     }
-    
+
     if (attachment.type === "audio") {
       return <Music className="w-4 h-4" />;
     }
 
     // For regular files
     const mimeType = attachment.file?.type || attachment.upload?.mimetype || "";
-    
+
     if (mimeType.startsWith("image/")) {
       return <Image className="w-4 h-4" />;
     }
-    
+
     return <FileText className="w-4 h-4" />;
   };
 
@@ -53,12 +61,14 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
     if (attachment.type === "drawing") {
       return attachment.name || "Drawing";
     }
-    
+
     if (attachment.type === "audio") {
       return attachment.name || "Audio Recording";
     }
 
-    return attachment.file?.name || attachment.upload?.originalName || "Unknown file";
+    return (
+      attachment.file?.name || attachment.upload?.originalName || "Unknown file"
+    );
   };
 
   const getFileSize = (attachment: FileAttachment) => {
@@ -106,7 +116,9 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
   const handleDownload = (attachment: FileAttachment) => {
     if (!canDownload(attachment)) return;
 
-    const downloadUrl = `${import.meta.env.VITE_UPLOAD_API}/download/${attachment.upload!._id}`;
+    const downloadUrl = `${import.meta.env.VITE_UPLOAD_API}/files/download/${
+      attachment.upload!._id
+    }`;
     const link = document.createElement("a");
     link.href = downloadUrl;
     link.download = attachment.upload!.originalName;
@@ -133,9 +145,7 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
             `}
           >
             {/* File Icon */}
-            <div className="flex-shrink-0">
-              {getFileIcon(attachment)}
-            </div>
+            <div className="flex-shrink-0">{getFileIcon(attachment)}</div>
 
             {/* File Info */}
             <div className="flex-1 min-w-0">
@@ -152,20 +162,25 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
                   </>
                 )}
                 <span className="text-gray-400">•</span>
-                <span className={`text-xs font-medium ${getStatusColor(attachment)}`}>
+                <span
+                  className={`text-xs font-medium ${getStatusColor(
+                    attachment
+                  )}`}
+                >
                   {getStatusText(attachment)}
                 </span>
               </div>
 
               {/* Progress Bar for uploading files */}
-              {attachment.status === "uploading" && attachment.type === "file" && (
-                <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                  <div
-                    className="bg-blue-500 h-1 rounded-full transition-all duration-300"
-                    style={{ width: `${attachment.progress || 0}%` }}
-                  />
-                </div>
-              )}
+              {attachment.status === "uploading" &&
+                attachment.type === "file" && (
+                  <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                    <div
+                      className="bg-blue-500 h-1 rounded-full transition-all duration-300"
+                      style={{ width: `${attachment.progress || 0}%` }}
+                    />
+                  </div>
+                )}
 
               {/* Error Message */}
               {attachment.status === "error" && attachment.error && (
