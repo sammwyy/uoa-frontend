@@ -1,5 +1,5 @@
 import { Message } from "@/lib/graphql";
-import { Bot, Copy, Loader2, User } from "lucide-react";
+import { Bot, Copy, Loader2 } from "lucide-react";
 import React from "react";
 import { MessageAttachments } from "./MessageAttachments";
 import { MessageRenderer } from "./MessageRenderer";
@@ -68,8 +68,8 @@ export const MessageCard: React.FC<MessageCardProps> = ({
             p-3 sm:p-4 rounded-xl shadow-sm backdrop-blur-md
             ${
               message.role === "user"
-                ? "bg-gradient-to-r from-primary-500 to-secondary-500 text-white ml-auto shadow-lg"
-                : "bg-white/80 dark:bg-gray-800/80 border border-gray-200/30 dark:border-gray-700/30 text-gray-800 dark:text-gray-200"
+                ? "bg-primary-500 to-secondary-600 dark:bg-primary-200 dark:to-secondary-300 text-white ml-auto shadow-lg"
+                : "bg-primary-200/80 to-secondary-300/80 dark:bg-primary-500/80 dark:to-secondary-600/80 border border-gray-200/30 dark:border-gray-700/30 text-gray-800 dark:text-gray-200"
             }
             ${isPending ? "opacity-75" : ""}
           `}
@@ -151,12 +151,6 @@ export const MessageCard: React.FC<MessageCardProps> = ({
           </div>
         )}
       </div>
-
-      {message.role === "user" && (
-        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center flex-shrink-0">
-          <User className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-300" />
-        </div>
-      )}
     </div>
   );
 };

@@ -151,17 +151,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
 
         {/* Filter Tabs */}
         <div className="px-6 mb-4">
-          <div className="flex bg-gray-100/80 dark:bg-gray-800/80 rounded-lg p-1 backdrop-blur-md">
+          <div className="flex bg-gray-100/80 dark:bg-primary-800/80 rounded-lg p-1 backdrop-blur-md">
             <button
               onClick={() => setActiveFilter("all")}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 activeFilter === "all"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                  ? "bg-white dark:bg-secondary-500 text-gray-900 dark:text-gray-100 shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               }`}
             >
               <MessageSquare className="w-4 h-4" />
-              <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                 {getFilterCount("all")}
               </span>
             </button>
@@ -170,12 +170,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
               onClick={() => setActiveFilter("pinned")}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 activeFilter === "pinned"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                  ? "bg-white dark:bg-secondary-500 text-gray-900 dark:text-gray-100 shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               }`}
             >
               <Pin className="w-4 h-4" />
-              <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                 {getFilterCount("pinned")}
               </span>
             </button>
@@ -184,12 +184,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
               onClick={() => setActiveFilter("archived")}
               className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 activeFilter === "archived"
-                  ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm"
+                  ? "bg-white dark:bg-secondary-500 text-gray-900 dark:text-gray-100 shadow-sm"
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
               }`}
             >
               <Archive className="w-4 h-4" />
-              <span className="text-xs bg-gray-200 dark:bg-gray-600 px-1.5 py-0.5 rounded-full">
+              <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded-full">
                 {getFilterCount("archived")}
               </span>
             </button>
