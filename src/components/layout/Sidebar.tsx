@@ -66,6 +66,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
     e: React.MouseEvent | undefined
   ) => {
     e?.stopPropagation();
+
+    if (chatId === secondaryChat._id) {
+      alert(
+        "You cannot have two instances of the same chat open (Yes, it's due to a bug, it will be possible soon)"
+      );
+      return;
+    }
+
     navigate(`/c/${chatId}/${secondaryChat._id}`);
   };
 

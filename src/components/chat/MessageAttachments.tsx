@@ -1,4 +1,13 @@
-import { Download, Eye, FileText, Image, Music, Trash2, Video, X } from "lucide-react";
+import {
+  Download,
+  Eye,
+  FileText,
+  Image,
+  Music,
+  Trash2,
+  Video,
+  X,
+} from "lucide-react";
 import React, { useState } from "react";
 
 import { Button } from "../ui/Button";
@@ -30,11 +39,11 @@ const formatBytes = (bytes: number): string => {
 const getFileIcon = (mimetype: string, size: "sm" | "md" | "lg" = "md") => {
   const iconSizes = {
     sm: "w-3 h-3",
-    md: "w-4 h-4", 
-    lg: "w-6 h-6"
+    md: "w-4 h-4",
+    lg: "w-6 h-6",
   };
   const iconSize = iconSizes[size];
-  
+
   if (mimetype.startsWith("image/")) {
     return <Image className={`${iconSize} text-blue-500`} />;
   }
@@ -81,12 +90,13 @@ const AttachmentPreview: React.FC<{
 
           {/* File info */}
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-white truncate" title={file.originalName}>
+            <p
+              className="text-xs font-medium text-white truncate"
+              title={file.originalName}
+            >
               {file.originalName}
             </p>
-            <p className="text-xs text-white/70">
-              {formatBytes(file.size)}
-            </p>
+            <p className="text-xs text-white/70">{formatBytes(file.size)}</p>
           </div>
 
           {/* Actions */}
@@ -160,12 +170,15 @@ const AttachmentPreview: React.FC<{
 
       {/* File info */}
       <div className="p-3">
-        <h4 className="font-medium text-gray-800 dark:text-gray-200 truncate mb-1" title={file.originalName}>
+        <h4
+          className="font-medium text-gray-800 dark:text-gray-200 truncate mb-1"
+          title={file.originalName}
+        >
           {file.originalName}
         </h4>
         <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
           <span>{formatBytes(file.size)}</span>
-          <span>{file.mimetype.split('/')[1].toUpperCase()}</span>
+          <span>{file.mimetype.split("/")[1].toUpperCase()}</span>
         </div>
       </div>
     </div>
@@ -296,11 +309,7 @@ const AttachmentModal: React.FC<{
               Delete
             </Button>
           )}
-          <Button
-            variant="secondary"
-            onClick={onClose}
-            className="flex-1"
-          >
+          <Button variant="secondary" onClick={onClose} className="flex-1">
             Close
           </Button>
         </div>
@@ -326,7 +335,6 @@ export const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
       setLoading(true);
       try {
         // TODO: Replace with actual API call to get file details
-        // For now, we'll create mock data based on attachment IDs
         const mockFiles: AttachmentFile[] = attachments.map((id, index) => ({
           _id: id,
           originalName: `attachment-${index + 1}.jpg`,
@@ -356,7 +364,7 @@ export const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
 
   const handleDeleteFile = (fileId: string) => {
     onDeleteAttachment?.(fileId);
-    setFiles(prev => prev.filter(f => f._id !== fileId));
+    setFiles((prev) => prev.filter((f) => f._id !== fileId));
   };
 
   if (loading || attachments.length === 0) {
