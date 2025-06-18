@@ -29,6 +29,7 @@ import { Input } from "../ui/Input";
 import { BranchDropdown } from "./BranchDropdown";
 import { ForkBranchModal } from "./ForkBranchModal";
 import { MobileConfigModal } from "./MobileConfigModal";
+import { ModelConfigModal } from "./ModelConfigModal";
 import { ModelSelector } from "./ModelSelector";
 import { UserMenu } from "./UserMenu";
 
@@ -74,6 +75,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const [editTitle, setEditTitle] = useState("");
   const [mobileConfigOpen, setMobileConfigOpen] = useState(false);
   const [createBranchModalOpen, setCreateBranchModalOpen] = useState(false);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
 
   const handleStartEdit = () => {
     if (!chat || !isAuthenticated) return;
@@ -136,6 +138,10 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     setCreateBranchModalOpen(true);
   };
 
+  const handleModelConfigChange = (config: ModelConfig) => {
+    onChangeModelConfig(config);
+  };
+
   return (
     <>
       <div className="backdrop-blur-md border-b border-white/20 dark:border-gray-700/30 mx-5">
@@ -161,6 +167,20 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   models={models}
                   selectedModel={selectedModel}
                   onSelectModel={onSelectModel}
+                />
+              </div>
+            )}
+
+            {/* Model Settings Button - Next to model selector */}
+            {!hideModelSelector && isAuthenticated && (
+              <div className="hidden sm:block flex-shrink-0">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={Settings}
+                  onClick={() => setConfigModalOpen(true)}
+                  className="p-2"
+                  title="Configure model settings"
                 />
               </div>
             )}
@@ -312,6 +332,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         onClose={() => setCreateBranchModalOpen(false)}
         chatId={chat?._id || ""}
         currentBranch={currentBranch}
+      />
+
+      {/* Model Configuration Modal */}
+      <ModelConfigModal
+        isOpen={configModalOpen}
+        onClose={() => setConfigModalOpen(false)}
+        currentModel={selectedModel}
+        onConfigChange={handleModelConfigChange}
+        initialConfig={modelConfig}
       />
     </>
   );

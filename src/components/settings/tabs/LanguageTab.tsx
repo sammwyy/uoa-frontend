@@ -62,7 +62,7 @@ export function LanguageTab() {
               value={preferences.language}
               onSelect={(value) => updatePreference("language", value)}
               placeholder="Select language..."
-              disabled={isLoading}
+              disabled={true}
             />
           </div>
 

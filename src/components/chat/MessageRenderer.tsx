@@ -171,7 +171,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               </h3>
             ),
             p: ({ children }) => (
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-3">
+              <p className="text-gray-200 dark:text-gray-300 leading-relaxed mb-3">
                 {children}
               </p>
             ),

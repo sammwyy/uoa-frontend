@@ -6,8 +6,8 @@ import {
   LogOut,
   Monitor,
   Smartphone,
-  Trash2,
   User,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -555,6 +555,25 @@ export function AccountTab() {
             )}
           </div>
 
+          <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/40">
+            <div className="flex flex-col items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                <h3 className="font-semibold text-yellow-600 dark:text-yellow-400">
+                  Removed Feature
+                </h3>
+              </div>
+
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                This feature was removed to avoid leaking information if this
+                application were to be live streamed. Unlike other removed
+                features, this one is complete but commented out in the source
+                code.
+              </p>
+            </div>
+          </div>
+
+          {/*
           {sessionsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -625,7 +644,7 @@ export function AccountTab() {
                 );
               })}
             </div>
-          )}
+)} }/*/}
         </Card>
       </div>
 

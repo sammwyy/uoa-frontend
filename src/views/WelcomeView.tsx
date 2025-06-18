@@ -1,17 +1,27 @@
-import { Bot, Menu, MessageSquare, PenTool, Sparkles } from "lucide-react";
+import {
+  Bot,
+  Menu,
+  MessageSquare,
+  PenTool,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { ChatInput } from "@/components/chat/ChatInput";
 import { FileAttachment } from "@/components/chat/FileAttachmentList";
+import { ModelConfigModal } from "@/components/chat/ModelConfigModal";
 import { ModelSelector } from "@/components/chat/ModelSelector";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChats";
 import { useModels } from "@/hooks/useModels";
 import { useTools } from "@/hooks/useTools";
+import { apolloClient } from "@/lib/apollo/apollo-client";
+import { UPDATE_BRANCH_MUTATION } from "@/lib/apollo/queries";
 import { Tools } from "@/lib/data/tools";
-import { ChatBranch } from "@/lib/graphql";
+import { ChatBranch, ModelConfig } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { Card } from "../components/ui/Card";
@@ -23,22 +33,59 @@ export const WelcomeView: React.FC = () => {
   const { createChat } = useChats();
   const { toggleTool, toolStates } = useTools(Tools);
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
+  const [configModalOpen, setConfigModalOpen] = useState(false);
 
   const navigate = useNavigate();
 
   const [isCreatingChat, setIsCreatingChat] = useState(false);
-  const [dummyNewBranch, setDummyNewBranch] = useState<ChatBranch>({
-    _id: "dummy-new-branch",
-    branchPoint: 0,
-    isActive: true,
-    messageCount: 0,
-    name: "New Chat",
-    chatId: "",
-    modelConfig: {},
+  const [modelConfig, setModelConfig] = useState<ModelConfig>({
+    temperature: 0.7,
+    maxTokens: 2048,
+    apiKeyId: undefined,
+    modelId: undefined,
   });
+
   const selectedModel = models.find(
-    (model) => model.id === dummyNewBranch.modelConfig?.modelId
+    (model) => model.id === modelConfig?.modelId
   );
+
+  // Validation for chat input
+  const getChatInputError = (): string | null => {
+    if (!isAuthenticated) {
+      return "Please sign in to start chatting with AI";
+    }
+
+    if (!modelConfig?.modelId) {
+      return "Please select an AI model to continue";
+    }
+
+    if (!modelConfig?.apiKeyId) {
+      return "Please configure an API key in settings to use this model";
+    }
+
+    if (!session?.decryptKey) {
+      return "Session error: Please sign in again";
+    }
+
+    return null;
+  };
+
+  // Update branch
+  const updateBranch = async (
+    branchId: string,
+    updates: Partial<ChatBranch>
+  ) => {
+    // Update chat with new branch data
+    const { data } = await apolloClient.mutate({
+      mutation: UPDATE_BRANCH_MUTATION,
+      variables: {
+        branchId: branchId,
+        payload: updates,
+      },
+    });
+
+    return data?.updateBranch;
+  };
 
   const handleSendMessage = async (message: string) => {
     if (!selectedModel) {
@@ -46,7 +93,7 @@ export const WelcomeView: React.FC = () => {
       return;
     }
 
-    if (!dummyNewBranch.modelConfig?.apiKeyId) {
+    if (!modelConfig?.apiKeyId) {
       console.error("No API key selected, cannot send message");
       return;
     }
@@ -68,6 +115,13 @@ export const WelcomeView: React.FC = () => {
       // Create new chat
       const newChat = await createChat();
 
+      // Update default branch
+      if (!newChat?.defaultBranch) {
+        throw new Error("Failed to create chat: No default branch");
+      }
+
+      await updateBranch(newChat.defaultBranch?._id, { modelConfig });
+
       // Add pending message
       // ToDo: Move this to a global context/hook.
 
@@ -78,7 +132,7 @@ export const WelcomeView: React.FC = () => {
             branchId: newChat.defaultBranch._id,
             prompt: message,
             modelId: selectedModel?.id,
-            apiKeyId: dummyNewBranch.modelConfig?.apiKeyId,
+            apiKeyId: modelConfig?.apiKeyId,
             rawDecryptKey: session?.decryptKey,
             attachments: attachments.map((a) => a.upload?._id),
           })
@@ -92,6 +146,10 @@ export const WelcomeView: React.FC = () => {
     } finally {
       setIsCreatingChat(false);
     }
+  };
+
+  const handleModelConfigChange = (config: ModelConfig) => {
+    setModelConfig(config);
   };
 
   const getGreeting = () => {
@@ -108,28 +166,41 @@ export const WelcomeView: React.FC = () => {
       {/* Main Content */}
       <div className="h-full overflow-y-auto">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0 p-3 sm:p-4 lg:p-6">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon={Menu}
-            onClick={toggleSidebar}
-            className="p-2 flex-shrink-0"
-            title="Toggle sidebar"
-          />
+          {isAuthenticated && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon={Menu}
+              onClick={toggleSidebar}
+              className="p-2 flex-shrink-0"
+              title="Toggle sidebar"
+            />
+          )}
 
-          <ModelSelector
-            models={models}
-            selectedModel={selectedModel}
-            onSelectModel={(model) => {
-              setDummyNewBranch((prev) => ({
-                ...prev,
-                modelConfig: {
-                  ...prev.modelConfig,
+          {isAuthenticated && (
+            <ModelSelector
+              models={models}
+              selectedModel={selectedModel}
+              onSelectModel={(model) => {
+                setModelConfig((prev) => ({
+                  ...prev,
                   modelId: model.id,
-                },
-              }));
-            }}
-          />
+                }));
+              }}
+            />
+          )}
+
+          {/* Model Settings Button - Next to model selector */}
+          {isAuthenticated && (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={Settings}
+              onClick={() => setConfigModalOpen(true)}
+              className="p-2 flex-shrink-0"
+              title="Configure model settings"
+            />
+          )}
         </div>
 
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8 sm:space-y-12">
@@ -141,11 +212,14 @@ export const WelcomeView: React.FC = () => {
 
             <div className="space-y-3">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-800 dark:text-gray-200">
-                {getGreeting()}, {userName}!
+                {isAuthenticated
+                  ? `${getGreeting()}, ${userName}!`
+                  : "Welcome to AI Chat"}
               </h1>
               <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-                I'm your AI assistant, ready to help with anything you need.
-                What would you like to explore today?
+                {isAuthenticated
+                  ? "I'm your AI assistant, ready to help with anything you need. What would you like to explore today?"
+                  : "Your intelligent AI assistant is ready to help. Sign in to start your conversation."}
               </p>
             </div>
           </div>
@@ -210,18 +284,11 @@ export const WelcomeView: React.FC = () => {
               : "Sign in to start chatting with AI..."
           }
           disabled={!isAuthenticated}
-          modelConfig={dummyNewBranch.modelConfig || {}}
-          onChangeModelConfig={(config) => {
-            setDummyNewBranch((prev) => ({
-              ...prev,
-              modelConfig: {
-                ...prev.modelConfig,
-                ...config,
-              },
-            }));
-          }}
+          modelConfig={modelConfig}
+          onChangeModelConfig={handleModelConfigChange}
           attachments={attachments}
           setAttachments={setAttachments}
+          error={getChatInputError()}
         />
 
         {!isAuthenticated && (
@@ -238,6 +305,15 @@ export const WelcomeView: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Model Configuration Modal */}
+      <ModelConfigModal
+        isOpen={configModalOpen}
+        onClose={() => setConfigModalOpen(false)}
+        currentModel={selectedModel}
+        onConfigChange={handleModelConfigChange}
+        initialConfig={modelConfig}
+      />
     </div>
   );
 };

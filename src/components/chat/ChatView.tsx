@@ -72,6 +72,27 @@ export function ChatView({ chatId }: ChatViewProps) {
     modelId: undefined,
   });
 
+  // Validation for chat input
+  const getChatInputError = (): string | null => {
+    if (!isAuthenticated) {
+      return "Please sign in to send messages";
+    }
+
+    if (!modelConfig.modelId) {
+      return "Please select an AI model to continue";
+    }
+
+    if (!modelConfig.apiKeyId) {
+      return "Please configure an API key in settings to use this model";
+    }
+
+    if (!session?.decryptKey) {
+      return "Session error: Please sign in again";
+    }
+
+    return null;
+  };
+
   useEffect(() => {
     const pendingMessage = localStorage.getItem("uoa:tempPendingMessage");
     if (!pendingMessage || !chat) {
@@ -354,6 +375,7 @@ export function ChatView({ chatId }: ChatViewProps) {
       branchId: dto.branchId,
       role: "user",
       content: [{ type: "text", text: dto.prompt }],
+      attachments: dto.attachments || [],
     });
 
     if (toolStateMap["image-generation"]) {
@@ -378,8 +400,23 @@ export function ChatView({ chatId }: ChatViewProps) {
     });
   };
 
+  const handleDeleteAttachment = async (
+    messageId: string,
+    attachmentId: string
+  ) => {
+    // TODO: Implement attachment deletion
+    // This would typically involve:
+    // 1. Call API to remove attachment from message
+    // 2. Update local message state
+    // 3. Optionally delete the file if no longer referenced
+    console.log("Delete attachment:", attachmentId, "from message:", messageId);
+  };
+
   useEffect(() => {
-    loadChat(chatId);
+    setMessages({ hasMore: false, messages: [], total: -1 });
+    setTimeout(() => {
+      loadChat(chatId);
+    }, 1);
   }, [chatId]);
 
   useEffect(() => {
@@ -452,6 +489,8 @@ export function ChatView({ chatId }: ChatViewProps) {
           pendingStreamMessage={currentStreamMessage}
           pendingSendingMessage={currentSendingMessage}
           scrollContainerRef={scrollContainerRef}
+          onDeleteAttachment={handleDeleteAttachment}
+          canDeleteAttachments={isAuthenticated}
         />
       </div>
 
@@ -467,6 +506,7 @@ export function ChatView({ chatId }: ChatViewProps) {
           placeholder={"Type your message here... (Shift+Enter for new line)"}
           attachments={attachments}
           setAttachments={setAttachments}
+          error={getChatInputError()}
         />
       </div>
     </div>

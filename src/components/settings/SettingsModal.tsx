@@ -1,5 +1,6 @@
 import {
   Globe,
+  HardDrive,
   Key,
   Palette,
   Puzzle,
@@ -16,6 +17,7 @@ import { ApiKeysTab } from "./tabs/ApiKeysTab";
 import { AppearanceTab } from "./tabs/AppearanceTab";
 import { LanguageTab } from "./tabs/LanguageTab";
 import { PrivacyTab } from "./tabs/PrivacyTab";
+import { StorageTab } from "./tabs/StorageTab";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -26,6 +28,7 @@ const tabs = [
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "language", label: "Language", icon: Globe },
   { id: "apikeys", label: "API Keys", icon: Key },
+  { id: "storage", label: "Storage", icon: HardDrive },
   { id: "addons", label: "Addons", icon: Puzzle },
   { id: "privacy", label: "Privacy", icon: Shield },
   { id: "account", label: "Account", icon: User },
@@ -47,6 +50,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
       case "apikeys":
         return <ApiKeysTab />;
+
+      case "storage":
+        return <StorageTab />;
 
       case "addons":
         return <AddonsTab />;

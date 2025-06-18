@@ -14,13 +14,18 @@ interface ChatAreaProps {
   pendingStreamMessage?: Message | null;
   pendingSendingMessage?: Message | null;
   scrollContainerRef: React.RefObject<HTMLDivElement>;
+  onDeleteAttachment?: (messageId: string, attachmentId: string) => void;
+  canDeleteAttachments?: boolean;
 }
+
 export const ChatArea: React.FC<ChatAreaProps> = ({
   messages,
   isLoading,
   pendingStreamMessage,
   pendingSendingMessage,
   scrollContainerRef,
+  onDeleteAttachment,
+  canDeleteAttachments = false,
 }) => {
   const { preferences } = usePreferences();
   const filteredMessages: Message[] = messages.filter(Boolean) as Message[];
@@ -42,6 +47,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const handleDeleteAttachment = (messageId: string) => (attachmentId: string) => {
+    onDeleteAttachment?.(messageId, attachmentId);
   };
 
   // Scroll to bottom function
@@ -188,6 +197,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             showTimestamps={preferences.showTimestamps}
             formatTimestamp={formatTimestamp}
             onCopyMessage={copyMessage}
+            onDeleteAttachment={handleDeleteAttachment(message._id)}
+            canDeleteAttachments={canDeleteAttachments}
           />
         ))}
 
@@ -200,6 +211,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             formatTimestamp={formatTimestamp}
             onCopyMessage={copyMessage}
             isPending={true}
+            onDeleteAttachment={handleDeleteAttachment(pendingSendingMessage._id || "temp")}
+            canDeleteAttachments={canDeleteAttachments}
           />
         )}
 
@@ -212,6 +225,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
             formatTimestamp={formatTimestamp}
             onCopyMessage={copyMessage}
             isStreaming={true}
+            onDeleteAttachment={handleDeleteAttachment(pendingStreamMessage._id || "temp")}
+            canDeleteAttachments={canDeleteAttachments}
           />
         )}
 

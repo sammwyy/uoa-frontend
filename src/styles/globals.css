@@ -369,6 +369,66 @@ body,
   --bg-selected-hover: 80 45 65;
 }
 
+/* Theme: Shad - Monochrome black/white theme like shadcn */
+.theme-shad {
+  /* Light mode - Primary colors (blacks/grays for buttons) */
+  --primary-50: 250 250 250; /* Almost white */
+  --primary-100: 245 245 245; /* Very light gray */
+  --primary-200: 229 229 229; /* Light gray */
+  --primary-300: 212 212 212; /* Medium light gray */
+  --primary-400: 163 163 163; /* Medium gray */
+  --primary-500: 23 23 23; /* Dark gray - main button color */
+  --primary-600: 10 10 10; /* Very dark gray */
+  --primary-700: 5 5 5; /* Almost black */
+  --primary-800: 2 2 2; /* Very dark */
+  --primary-900: 0 0 0; /* Pure black */
+  --primary-950: 0 0 0; /* Pure black */
+
+  /* Secondary colors - Same monochrome scale */
+  --secondary-50: 250 250 250; /* Almost white */
+  --secondary-100: 245 245 245; /* Very light gray */
+  --secondary-200: 229 229 229; /* Light gray */
+  --secondary-300: 212 212 212; /* Medium light gray */
+  --secondary-400: 163 163 163; /* Medium gray */
+  --secondary-500: 38 38 38; /* Slightly lighter dark for gradient */
+  --secondary-600: 23 23 23; /* Dark gray */
+  --secondary-700: 10 10 10; /* Very dark gray */
+  --secondary-800: 5 5 5; /* Almost black */
+  --secondary-900: 2 2 2; /* Very dark */
+  --secondary-950: 0 0 0; /* Pure black */
+
+  /* Light theme gradient - Very light gray background */
+  --theme-gradient: linear-gradient(
+    135deg,
+    rgb(252, 252, 252),
+    rgb(250, 250, 250),
+    rgb(248, 248, 248)
+  );
+
+  /* Chat container - Slightly darker for message area */
+  --chat-container: linear-gradient(
+    135deg,
+    rgb(245, 245, 245),
+    rgb(248, 248, 248),
+    rgb(250, 250, 250)
+  );
+
+  /* Light mode background variations */
+  --bg-primary: 255 255 255;
+  --bg-secondary: 250 250 250;
+  --bg-surface: 245 245 245;
+  --bg-surface-hover: 240 240 240;
+  --bg-surface-active: 229 229 229;
+  --bg-input: 255 255 255;
+  --bg-input-hover: 250 250 250;
+  --bg-modal: 255 255 255;
+  --bg-dropdown: 255 255 255;
+  --bg-card: 255 255 255;
+  --bg-card-hover: 250 250 250;
+  --bg-selected: 245 245 245;
+  --bg-selected-hover: 229 229 229;
+}
+
 /* Dark mode for Shad theme - Monochrome white/black like shadcn */
 .dark.theme-shad {
   /* Primary colors - Dark grays/blacks for button backgrounds */

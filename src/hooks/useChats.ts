@@ -27,7 +27,7 @@ export const useChats = () => {
     GET_CHATS_QUERY,
     {
       skip: true, // We'll trigger this manually
-      fetchPolicy: isOnline ? "cache-and-network" : "cache-only",
+      fetchPolicy: isOnline ? "network-only" : "cache-only",
       errorPolicy: "ignore",
       notifyOnNetworkStatusChange: false,
     }

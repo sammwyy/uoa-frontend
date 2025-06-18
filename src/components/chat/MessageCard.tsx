@@ -1,6 +1,7 @@
 import { Message } from "@/lib/graphql";
-import { Bot, Copy, Loader2, ThumbsDown, ThumbsUp, User } from "lucide-react";
+import { Bot, Copy, Loader2, User } from "lucide-react";
 import React from "react";
+import { MessageAttachments } from "./MessageAttachments";
 import { MessageRenderer } from "./MessageRenderer";
 import { TTSButton } from "./TTSButton";
 
@@ -11,6 +12,8 @@ interface MessageCardProps {
   onCopyMessage: (content: string) => void;
   isPending?: boolean;
   isStreaming?: boolean;
+  onDeleteAttachment?: (attachmentId: string) => void;
+  canDeleteAttachments?: boolean;
 }
 
 export const MessageCard: React.FC<MessageCardProps> = ({
@@ -20,6 +23,8 @@ export const MessageCard: React.FC<MessageCardProps> = ({
   onCopyMessage,
   isPending = false,
   isStreaming = false,
+  onDeleteAttachment,
+  canDeleteAttachments = false,
 }) => {
   const getMessageTextContent = (message: Message) => {
     return message.content
@@ -29,6 +34,7 @@ export const MessageCard: React.FC<MessageCardProps> = ({
   };
 
   const messageContent = getMessageTextContent(message);
+  const hasAttachments = message.attachments && message.attachments.length > 0;
 
   return (
     <div
@@ -47,6 +53,16 @@ export const MessageCard: React.FC<MessageCardProps> = ({
           message.role === "user" ? "order-last" : ""
         }`}
       >
+        {/* User attachments - shown above message */}
+        {message.role === "user" && hasAttachments && (
+          <MessageAttachments
+            attachments={message.attachments}
+            role={message.role}
+            onDeleteAttachment={onDeleteAttachment}
+            canDelete={canDeleteAttachments}
+          />
+        )}
+
         <div
           className={`
             p-3 sm:p-4 rounded-xl shadow-sm backdrop-blur-md
@@ -66,11 +82,21 @@ export const MessageCard: React.FC<MessageCardProps> = ({
           )}
         </div>
 
+        {/* Assistant attachments - shown below message */}
+        {message.role === "assistant" && hasAttachments && (
+          <MessageAttachments
+            attachments={message.attachments}
+            role={message.role}
+            onDeleteAttachment={onDeleteAttachment}
+            canDelete={canDeleteAttachments}
+          />
+        )}
+
         {/* Pending/Sending status */}
         {isPending && message.role === "user" && (
           <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
             <Loader2 className="w-3 h-3 animate-spin" />
-            <span>Enviando...</span>
+            <span>Sending...</span>
           </div>
         )}
 
@@ -78,7 +104,7 @@ export const MessageCard: React.FC<MessageCardProps> = ({
         {isStreaming && message.role === "assistant" && (
           <div className="flex items-center gap-2 mt-2 text-xs text-gray-500 dark:text-gray-400">
             <Loader2 className="w-3 h-3 animate-spin" />
-            <span>Generando respuesta...</span>
+            <span>Generating response...</span>
           </div>
         )}
 
@@ -109,6 +135,7 @@ export const MessageCard: React.FC<MessageCardProps> = ({
               className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
             />
 
+            {/**
             <button
               className="p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-green-600 transition-colors"
               title="Good response"
@@ -120,7 +147,7 @@ export const MessageCard: React.FC<MessageCardProps> = ({
               title="Poor response"
             >
               <ThumbsDown className="w-3 h-3 sm:w-4 sm:h-4" />
-            </button>
+            </button> */}
           </div>
         )}
       </div>

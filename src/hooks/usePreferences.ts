@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client";
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   GET_PREFERENCES_QUERY,
@@ -16,6 +17,7 @@ import {
 export const usePreferences = () => {
   const store = usePreferencesStore();
   const { isOnline } = useConnectionStore();
+  const { i18n } = useTranslation();
 
   // Query for loading preferences (cache-first)
   const {
@@ -39,6 +41,15 @@ export const usePreferences = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Sync language with i18next when preferences change
+  useEffect(() => {
+    const currentLanguage = store.clientPreferences.language;
+    if (currentLanguage && i18n.language !== currentLanguage) {
+      logger.info("Syncing language with i18next:", currentLanguage);
+      i18n.changeLanguage(currentLanguage);
+    }
+  }, [store.clientPreferences.language, i18n]);
 
   // Sync server data when available and compare with cache
   useEffect(() => {

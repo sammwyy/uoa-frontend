@@ -1,4 +1,4 @@
-import { Mic, Paperclip, PenTool, Send, Settings } from "lucide-react";
+import { Mic, Paperclip, PenTool, Send } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 import { useModels } from "@/hooks/useModels";
@@ -12,7 +12,6 @@ import { AudioRecordModal } from "./AudioRecordModal";
 import { DrawingModal } from "./DrawingModal";
 import { FileAttachment, FileAttachmentList } from "./FileAttachmentList";
 import { FileViewModal } from "./FileViewModal";
-import { ModelConfigModal } from "./ModelConfigModal";
 import { ToolsBar } from "./ToolsBar";
 
 interface ChatInputProps {
@@ -28,6 +27,8 @@ interface ChatInputProps {
   // Attachments
   attachments: FileAttachment[];
   setAttachments: React.Dispatch<React.SetStateAction<FileAttachment[]>>;
+  // Error state
+  error?: string | null;
 }
 
 const generateFileId = () => {
@@ -45,6 +46,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   modelConfig,
   attachments,
   setAttachments,
+  error,
 }) => {
   const { models } = useModels();
   const currentModel =
@@ -52,7 +54,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const [message, setMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const [configModalOpen, setConfigModalOpen] = useState(false);
   const [drawingModalOpen, setDrawingModalOpen] = useState(false);
   const [audioModalOpen, setAudioModalOpen] = useState(false);
   const [fileViewModal, setFileViewModal] = useState<{
@@ -89,7 +90,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if ((message.trim() || attachments.length > 0) && !isLoading) {
+    if ((message.trim() || attachments.length > 0) && !isLoading && !error) {
       // Only send completed attachments
       const completedAttachments = attachments.filter(
         (att) => att.status === "completed"
@@ -253,12 +254,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     setFileViewModal({ isOpen: true, attachment });
   };
 
-  const handleModelConfigChange = (config: ModelConfig) => {
-    if (onChangeModelConfig) {
-      onChangeModelConfig(config);
-    }
-  };
-
   const handleDrawingSave = (imageData: string) => {
     const drawingId = generateFileId();
     const newAttachment: FileAttachment = {
@@ -287,6 +282,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     handleAttachmentAdded(newAttachment);
   };
 
+  // Check if send button should be disabled
+  const isSendDisabled = 
+    (!message.trim() && attachments.length === 0) || 
+    isLoading || 
+    disabled || 
+    !!error;
+
   return (
     <div className="w-full max-w-4xl mx-auto px-0">
       <div
@@ -307,6 +309,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 Drop files here to upload
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="mb-3 p-3 bg-red-50/80 dark:bg-red-900/20 rounded-lg border border-red-200/50 dark:border-red-700/50">
+            <p className="text-red-800 dark:text-red-200 text-sm font-medium">
+              {error}
+            </p>
           </div>
         )}
 
@@ -332,6 +343,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onClick={handleAttachFileClick}
                 className="p-2.5"
                 title="Attach file"
+                disabled={disabled || !!error}
               />
               <Button
                 variant="ghost"
@@ -341,6 +353,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onClick={() => setAudioModalOpen(true)}
                 className="p-2.5"
                 title="Record audio"
+                disabled={disabled || !!error}
               />
               <Button
                 variant="ghost"
@@ -350,6 +363,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onClick={() => setDrawingModalOpen(true)}
                 className="p-2.5"
                 title="Draw"
+                disabled={disabled || !!error}
               />
             </div>
 
@@ -363,6 +377,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onClick={handleAttachFileClick}
                 className="p-2"
                 title="Attach file"
+                disabled={disabled || !!error}
               />
               <Button
                 variant="ghost"
@@ -372,6 +387,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onClick={() => setAudioModalOpen(true)}
                 className="p-2"
                 title="Record audio"
+                disabled={disabled || !!error}
               />
               <Button
                 variant="ghost"
@@ -381,6 +397,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onClick={() => setDrawingModalOpen(true)}
                 className="p-2"
                 title="Draw"
+                disabled={disabled || !!error}
               />
             </div>
 
@@ -393,41 +410,29 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
-                disabled={isLoading || disabled}
+                disabled={isLoading || disabled || !!error}
                 rows={1}
                 className="min-h-[24px] max-h-[240px] leading-6"
+                error={!!error}
               />
             </div>
 
             <div className="flex items-center">
               {/* Send button */}
               <Button
-                variant="ghost"
-                size="sm"
-                icon={Settings}
-                onClick={() => setConfigModalOpen(true)}
-                className="p-2 flex-shrink-0 ml-2"
-                title="Configure tools settings"
-              />
-
-              <Button
                 variant="primary"
                 size="md"
                 icon={Send}
                 type="submit"
-                disabled={
-                  (!message.trim() && attachments.length === 0) ||
-                  isLoading ||
-                  disabled
-                }
+                disabled={isSendDisabled}
                 className="p-2 sm:p-2.5 flex-shrink-0"
-                title="Send message"
+                title={error ? "Fix configuration errors to send" : "Send message"}
               />
             </div>
           </div>
 
           {/* Tool selection badges */}
-          {toolStates && toggleTool && toolStates.length > 0 && (
+          {toolStates && toggleTool && toolStates.length > 0 && !error && (
             <ToolsBar toolStates={toolStates} toggleTool={toggleTool} />
           )}
         </form>
@@ -442,15 +447,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.txt,.csv,.json"
         />
       </div>
-
-      {/* Tools Configuration Modal */}
-      <ModelConfigModal
-        isOpen={configModalOpen}
-        onClose={() => setConfigModalOpen(false)}
-        currentModel={currentModel}
-        onConfigChange={handleModelConfigChange}
-        initialConfig={modelConfig}
-      />
 
       {/* Drawing Modal */}
       <DrawingModal
