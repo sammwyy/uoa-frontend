@@ -1,4 +1,4 @@
-import { Mic, Paperclip, PenTool, Send } from "lucide-react";
+import { Mic, Paperclip, PenTool, Send, Settings } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 import { useModels } from "@/hooks/useModels";
@@ -399,29 +399,36 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               />
             </div>
 
-            {/* Send button */}
-            <Button
-              variant="primary"
-              size="md"
-              icon={Send}
-              type="submit"
-              disabled={
-                (!message.trim() && attachments.length === 0) ||
-                isLoading ||
-                disabled
-              }
-              className="p-2 sm:p-2.5 flex-shrink-0"
-              title="Send message"
-            />
+            <div className="flex items-center">
+              {/* Send button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                icon={Settings}
+                onClick={() => setConfigModalOpen(true)}
+                className="p-2 flex-shrink-0 ml-2"
+                title="Configure tools settings"
+              />
+
+              <Button
+                variant="primary"
+                size="md"
+                icon={Send}
+                type="submit"
+                disabled={
+                  (!message.trim() && attachments.length === 0) ||
+                  isLoading ||
+                  disabled
+                }
+                className="p-2 sm:p-2.5 flex-shrink-0"
+                title="Send message"
+              />
+            </div>
           </div>
 
           {/* Tool selection badges */}
           {toolStates && toggleTool && toolStates.length > 0 && (
-            <ToolsBar
-              toolStates={toolStates}
-              toggleTool={toggleTool}
-              onOpenConfig={() => setConfigModalOpen(true)}
-            />
+            <ToolsBar toolStates={toolStates} toggleTool={toggleTool} />
           )}
         </form>
 

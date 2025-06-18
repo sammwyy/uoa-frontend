@@ -65,6 +65,11 @@ export interface SocketEvents {
   "branch:created": (branch: ChatBranch) => void;
   "branch:updated": (branch: ChatBranch) => void;
   "branch:deleted": (branch: string) => void;
+
+  // Media
+  "media:start": (type: MediaType) => void;
+  "media:end": (response: MediaContent) => void;
+  "media:error": (error: string) => void;
 }
 
 export interface StorageConfig {
@@ -107,3 +112,11 @@ export interface UploadOptions {
   allowedTypes?: string[];
   timeout?: number;
 }
+
+// Media
+export type MediaType = "image" | "audio" | "video";
+
+export type MediaContent = {
+  type: MediaType;
+  url: string;
+};

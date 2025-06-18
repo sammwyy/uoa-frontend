@@ -2,8 +2,9 @@
  * Socket.IO client for real-time updates
  * Handles chat messages, API key updates, and authentication events
  */
-import type { SocketEvents } from "@/types";
 import { io, Socket } from "socket.io-client";
+
+import type { SocketEvents } from "@/types";
 import { logger } from "../logger";
 import { LocalStorage } from "../storage/local-storage";
 
@@ -45,6 +46,11 @@ const SOCKET_EVENTS: {
 
   // Preferences
   { event: "preferences:updated" },
+
+  // Media
+  { event: "media:start" },
+  { event: "media:end" },
+  { event: "media:error" },
 ];
 
 class SocketManager {

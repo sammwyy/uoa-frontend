@@ -1,6 +1,7 @@
 // ToDo: Nuke this file.
 import { useAuth } from "@/hooks/useAuth";
 import { useChats } from "@/hooks/useChats";
+import { useModels } from "@/hooks/useModels";
 import { useTools } from "@/hooks/useTools";
 import { apolloClient } from "@/lib/apollo/apollo-client";
 import {
@@ -8,7 +9,6 @@ import {
   GET_CHAT_QUERY,
   UPDATE_BRANCH_MUTATION,
 } from "@/lib/apollo/queries";
-import { Tools } from "@/lib/data/tools";
 import {
   AddMessageDto,
   Chat,
@@ -21,6 +21,7 @@ import {
 import { logger } from "@/lib/logger";
 import { socketManager } from "@/lib/socket/socket-client";
 import { createDummyMessage } from "@/lib/utils/messageUtils";
+import { getToolsForModel } from "@/lib/utils/modelUtils";
 import { useEffect, useRef, useState } from "react";
 import { LoadingScreen } from "../layout/LoadingScreen";
 import { ChatArea } from "./ChatArea";
@@ -34,6 +35,7 @@ export interface ChatViewProps {
 
 export function ChatView({ chatId }: ChatViewProps) {
   const { updateChat, sendMessage } = useChats();
+  const { models } = useModels();
   const { isAuthenticated, session } = useAuth();
   const [loading, setLoading] = useState(true); // Start with loading true
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,12 @@ export function ChatView({ chatId }: ChatViewProps) {
   const [currentSendingMessage, setCurrentSendingMessage] =
     useState<Message | null>(null);
 
-  const { toggleTool, toolStates } = useTools(Tools);
+  const selectedModel = models.find(
+    (m) => m.id === currentBranch?.modelConfig?.modelId
+  );
+  const { toggleTool, toolStates, toolStateMap } = useTools(
+    getToolsForModel(selectedModel)
+  );
 
   // Tools configuration state
   const [modelConfig, setModelConfig] = useState<ModelConfig>({
@@ -122,6 +129,9 @@ export function ChatView({ chatId }: ChatViewProps) {
             messageCount: prev.messageCount + 1,
           };
         });
+      },
+      "message:error": (error: string) => {
+        setError(error);
       },
       "branch:created": (branch: ChatBranch) => {
         if (branch.chatId !== chatId) {
@@ -345,6 +355,10 @@ export function ChatView({ chatId }: ChatViewProps) {
       role: "user",
       content: [{ type: "text", text: dto.prompt }],
     });
+
+    if (toolStateMap["image-generation"]) {
+      dto.useImageTool = true;
+    }
 
     setCurrentSendingMessage(sending);
     await sendMessage(dto);

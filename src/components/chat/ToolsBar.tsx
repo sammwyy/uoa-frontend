@@ -1,20 +1,17 @@
-import { Brain, Globe, Puzzle, Settings, Wrench } from "lucide-react";
+import { Brain, Globe, Puzzle, Wrench } from "lucide-react";
 import React from "react";
 
 import { ToolState } from "@/hooks/useTools";
 import { Badge } from "../ui/Badge";
-import { Button } from "../ui/Button";
 
 export interface ToolsBarProps {
   toggleTool: (toolId: string) => void;
   toolStates: ToolState[];
-  onOpenConfig?: () => void;
 }
 
 export const ToolsBar: React.FC<ToolsBarProps> = ({
   toolStates,
   toggleTool,
-  onOpenConfig,
 }) => {
   const getIcon = (iconName: string) => {
     switch (iconName) {
@@ -53,18 +50,6 @@ export const ToolsBar: React.FC<ToolsBarProps> = ({
             );
           })}
         </div>
-
-        {/* Configuration Button */}
-        {onOpenConfig && (
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={Settings}
-            onClick={onOpenConfig}
-            className="p-2 flex-shrink-0 ml-2"
-            title="Configure tools settings"
-          />
-        )}
       </div>
     </div>
   );

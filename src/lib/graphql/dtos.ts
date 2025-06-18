@@ -49,6 +49,8 @@ export interface AddMessageDto {
   prompt: string;
   rawDecryptKey: string;
   attachments: string[];
+
+  useImageTool?: boolean;
 }
 
 export interface UpdateChatDto {
