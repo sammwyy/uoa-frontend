@@ -104,7 +104,7 @@ export const FileViewModal: React.FC<FileViewModalProps> = ({
       const mimeType = attachment.upload.mimetype;
 
       if (mimeType.startsWith("image/")) {
-        const imageUrl = `${import.meta.env.VITE_UPLOAD_API}/serve/${
+        const imageUrl = `${import.meta.env.VITE_UPLOAD_API}/files/serve/${
           attachment.upload._id
         }`;
         return (

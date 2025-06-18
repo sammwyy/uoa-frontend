@@ -134,7 +134,7 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
           <div
             key={attachment.id}
             className={`
-              flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200
+              flex items-center gap-2 px-3 py-2 rounded-lg border transition-all duration-200 backdrop-blur-md
               ${
                 attachment.status === "completed"
                   ? "bg-green-50/80 dark:bg-green-900/20 border-green-200/50 dark:border-green-700/50"

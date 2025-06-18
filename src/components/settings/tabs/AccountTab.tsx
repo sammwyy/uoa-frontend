@@ -6,8 +6,8 @@ import {
   LogOut,
   Monitor,
   Smartphone,
+  Trash2,
   User,
-  Zap,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -263,8 +263,7 @@ export function AccountTab() {
     }
   };
 
-  const formatLastActivity = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatLastActivity = (date: Date) => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -278,12 +277,13 @@ export function AccountTab() {
     return date.toLocaleDateString();
   };
 
-  const getDeviceIcon = (deviceInfo: string) => {
-    const info = deviceInfo.toLowerCase();
+  const getDeviceIcon = (platform: string) => {
+    const info = platform.toLowerCase();
     if (
       info.includes("mobile") ||
       info.includes("android") ||
-      info.includes("iphone")
+      info.includes("iphone") ||
+      info.includes("ios")
     ) {
       return Smartphone;
     }
@@ -555,25 +555,6 @@ export function AccountTab() {
             )}
           </div>
 
-          <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/40">
-            <div className="flex flex-col items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                <h3 className="font-semibold text-yellow-600 dark:text-yellow-400">
-                  Removed Feature
-                </h3>
-              </div>
-
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                This feature was removed to avoid leaking information if this
-                application were to be live streamed. Unlike other removed
-                features, this one is complete but commented out in the source
-                code.
-              </p>
-            </div>
-          </div>
-
-          {/*
           {sessionsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -592,14 +573,16 @@ export function AccountTab() {
           ) : (
             <div className="space-y-3">
               {sessions.map((session) => {
-                const DeviceIcon = getDeviceIcon(session.deviceInfo);
+                const DeviceIcon = getDeviceIcon(
+                  session.deviceInfo.platform || "unknown"
+                );
                 const isRevoking = revokingSession === session._id;
 
                 return (
                   <div
                     key={session._id}
                     className={`flex items-center gap-4 p-4 rounded-lg border transition-colors ${
-                      session.isCurrentSession
+                      session.isActive
                         ? "bg-primary-50/50 dark:bg-primary-900/20 border-primary-200/50 dark:border-primary-700/50"
                         : "bg-gray-50/50 dark:bg-gray-800/50 border-gray-200/50 dark:border-gray-700/50"
                     }`}
@@ -611,40 +594,42 @@ export function AccountTab() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <h5 className="font-medium text-gray-800 dark:text-gray-200">
-                          {session.deviceInfo}
+                          {session.deviceInfo.browser || "Unknown"} on{" "}
+                          {session.deviceInfo.platform || "Unknown"}
                         </h5>
-                        {session.isCurrentSession && (
+                        {session._id === "<TODO: Current Session>" && (
                           <Badge variant="primary" size="sm">
                             Current Session
                           </Badge>
                         )}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        <p>IP: {session.ipAddress}</p>
+                        <p>
+                          IP: Redacted for this demo{" "}
+                          {/*{session.deviceInfo.ip}*/}
+                        </p>
                         <p>
                           Last activity:{" "}
-                          {formatLastActivity(session.lastActivity)}
+                          {formatLastActivity(new Date(session.lastUsedAt))}
                         </p>
                       </div>
                     </div>
 
-                    {!session.isCurrentSession && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={isRevoking ? undefined : Trash2}
-                        onClick={() => handleRevokeSession(session._id)}
-                        disabled={isRevoking}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-100/50 dark:hover:bg-red-900/30"
-                      >
-                        {isRevoking ? "Revoking..." : "Revoke"}
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={isRevoking ? undefined : Trash2}
+                      onClick={() => handleRevokeSession(session._id)}
+                      disabled={isRevoking}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-100/50 dark:hover:bg-red-900/30"
+                    >
+                      {isRevoking ? "Revoking..." : "Revoke"}
+                    </Button>
                   </div>
                 );
               })}
             </div>
-)} }/*/}
+          )}
         </Card>
       </div>
 
