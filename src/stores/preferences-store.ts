@@ -14,7 +14,7 @@ export const DEFAULT_PREFERENCES: Required<Preferences> = {
 
   // UI Preferences
   showTimestamps: true,
-  theme: "system",
+  theme: "default",
 };
 
 interface PreferencesState {

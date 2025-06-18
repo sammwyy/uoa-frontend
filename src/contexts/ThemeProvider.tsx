@@ -23,7 +23,7 @@ const applyTheme = (baseTheme: BaseTheme, accentTheme: AccentTheme) => {
 
   // Add current accent theme class
   document.documentElement.classList.add(`theme-${accentTheme}`);
-  
+
   logger.debug("Applied theme:", { baseTheme, accentTheme });
 };
 
@@ -39,18 +39,19 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({
   const accentTheme: AccentTheme =
     (preferences?.theme as AccentTheme) || "default";
 
-  // Apply theme immediately when component mounts (for first-time users)
-  useEffect(() => {
-    applyTheme(baseTheme, "default"); // Apply default theme immediately
-    logger.info("Initial theme applied on mount");
-  }, []); // Empty dependency array - runs only once on mount
-
   // Apply themes when preferences are loaded or changed
   useEffect(() => {
     if (isInitialized) {
       applyTheme(baseTheme, accentTheme);
-      logger.info("Theme updated from preferences:", { baseTheme, accentTheme });
+      logger.info("Theme updated from preferences:", {
+        baseTheme,
+        accentTheme,
+      });
+    } else {
+      applyTheme(baseTheme, "default"); // Apply default theme immediately
     }
+
+    console.log("Theme changed:", { baseTheme, accentTheme, isInitialized });
   }, [accentTheme, baseTheme, isInitialized]);
 
   const toggleBaseTheme = () => {
