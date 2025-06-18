@@ -110,6 +110,9 @@ export const ModelSelectorModal: React.FC<ModelSelectorModalProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const selectedCategoryPredicate = categories.find(
+    (c) => c.id === selectedCategory
+  )?.predicate;
   const [sortBy, setSortBy] = useState<SortOption>("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
@@ -124,7 +127,7 @@ export const ModelSelectorModal: React.FC<ModelSelectorModalProps> = ({
         model.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCategory =
-        selectedCategory === "all" || model.category === selectedCategory;
+        !selectedCategoryPredicate || selectedCategoryPredicate(model);
       const matchesEnabled = !showOnlyEnabled || model.enabled;
 
       return matchesSearch && matchesCategory && matchesEnabled;
@@ -166,10 +169,10 @@ export const ModelSelectorModal: React.FC<ModelSelectorModalProps> = ({
   }, [
     models,
     searchQuery,
-    selectedCategory,
+    selectedCategoryPredicate,
+    showOnlyEnabled,
     sortBy,
     sortOrder,
-    showOnlyEnabled,
   ]);
 
   const handleModelSelect = (model: AIModel) => {
@@ -367,7 +370,7 @@ export const ModelSelectorModal: React.FC<ModelSelectorModalProps> = ({
                 const count =
                   category.id === "all"
                     ? models.length
-                    : models.filter((m) => m.category === category.id).length;
+                    : models.filter((m) => category.predicate(m)).length;
 
                 return (
                   <button

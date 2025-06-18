@@ -125,6 +125,8 @@ export function ChatView({
   useEffect(() => {
     if (!isFocused) return;
 
+    console.log("Registering socket listeners");
+
     socketManager.setListeners({
       "message:start": () => {
         const dummy = createDummyMessage({
