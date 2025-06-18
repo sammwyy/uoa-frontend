@@ -4,6 +4,7 @@ import {
   Pin,
   Plus,
   Settings,
+  SplitSquareHorizontal,
   Trash2,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -58,6 +59,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
   const handleArchiveToggle = (chat: Chat, e: React.MouseEvent | undefined) => {
     e?.stopPropagation();
     updateChat(chat._id, { archived: !chat.archived });
+  };
+
+  const handleDualChat = (
+    secondaryChat: Chat,
+    e: React.MouseEvent | undefined
+  ) => {
+    e?.stopPropagation();
+    navigate(`/c/${chatId}/${secondaryChat._id}`);
   };
 
   // Filter chats based on active filter
@@ -227,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
               )}
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-1 overflow-x-hidden">
               {/* Chat Cards */}
               {sortedChats.map((chat) => (
                 <div
@@ -248,7 +257,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
                         )}
 
                         <span
-                          className={`font-semibold truncate text-sm ${
+                          className={`font-semibold text-nowrap group-hover:truncate text-sm ${
                             chatId === chat._id
                               ? "text-primary-700 dark:text-primary-300"
                               : "text-gray-800 dark:text-gray-200"
@@ -270,6 +279,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenSettings }) => {
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      {/* Dual chat button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon={SplitSquareHorizontal}
+                        onClick={(e) => handleDualChat(chat, e)}
+                        className={`p-1 text-gray-400 hover:text-gray-600`}
+                        title={"Dual chat view"}
+                      />
+
                       {/* Pin/Unpin button */}
                       <Button
                         variant="ghost"

@@ -26,6 +26,8 @@ export function AppRouter() {
         <Route path="new" element={<AppView />} />
         {/* Specific chat shows chat view */}
         <Route path="c/:chatId" element={<AppView />} />
+        {/* Specific double chat */}
+        <Route path="c/:chatId/:secondaryChatId" element={<AppView />} />
       </Route>
     </Routes>
   );

@@ -11,9 +11,10 @@ import {
   Settings,
   Unlock,
   X,
+  XIcon,
 } from "lucide-react";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 import { useModels } from "@/hooks/useModels";
 import {
@@ -32,7 +33,6 @@ import { ForkBranchModal } from "./ForkBranchModal";
 import { MobileConfigModal } from "./MobileConfigModal";
 import { ModelConfigModal } from "./ModelConfigModal";
 import { ModelSelector } from "./ModelSelector";
-import { UserMenu } from "./UserMenu";
 
 interface ChatHeaderProps {
   chat: Chat;
@@ -51,6 +51,11 @@ interface ChatHeaderProps {
   // Model config
   modelConfig: ModelConfig;
   onChangeModelConfig: (config: ModelConfig) => void;
+
+  // Display settings
+  compact?: boolean;
+  hideSidebarToggle?: boolean;
+  showCloseButton?: boolean;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
@@ -59,19 +64,24 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   branches,
   modelConfig,
   onChangeModelConfig,
-  onOpenSettings,
   hideModelSelector = false,
   isAuthenticated,
   currentBranchId,
   onBranchSelect,
   showBranches = false,
   onToggleBranches,
+
+  compact,
+  hideSidebarToggle,
+  showCloseButton,
 }) => {
   const { toggle: toggleSidebar } = useSidebarStore();
   const { models } = useModels();
   const selectedModel = models.find((m) => m.id === modelConfig.modelId);
 
   const navigate = useNavigate();
+  const params = useParams();
+
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [mobileConfigOpen, setMobileConfigOpen] = useState(false);
@@ -143,6 +153,21 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
     onChangeModelConfig(config);
   };
 
+  const handleClose = () => {
+    const primaryChatId = params.chatId;
+    const secondaryChatId = params.secondaryChatId;
+
+    const isPrimary = chat._id === primaryChatId;
+
+    if (isPrimary && secondaryChatId) {
+      navigate(`/c/${secondaryChatId}`);
+    } else if (isPrimary && !secondaryChatId) {
+      navigate("/");
+    } else {
+      navigate(`/c/${primaryChatId}`);
+    }
+  };
+
   return (
     <>
       <div className="backdrop-blur-md border-b border-white/20 dark:border-gray-700/30 mx-5">
@@ -150,7 +175,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           {/* Left Section - Sidebar Toggle and Model Selector */}
           <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
             {/* Sidebar Toggle - Only show if authenticated */}
-            {isAuthenticated && (
+            {isAuthenticated && !hideSidebarToggle && (
               <Button
                 variant="secondary"
                 size="sm"
@@ -168,6 +193,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   models={models}
                   selectedModel={selectedModel}
                   onSelectModel={onSelectModel}
+                  compact={compact}
                 />
               </div>
             )}
@@ -218,10 +244,12 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                 ) : (
                   <div className="flex flex-col items-center gap-1 sm:gap-2 flex-1 min-w-0">
                     <div className="flex items-center gap-2 sm:gap-3">
-                      <h1 className="text-sm sm:text-lg font-semibold text-gray-800 dark:text-gray-200 truncate max-w-full text-center">
-                        {chat.title}
-                      </h1>
-                      {isAuthenticated && (
+                      {!compact && (
+                        <h1 className="text-sm sm:text-lg font-semibold text-gray-800 dark:text-gray-200 truncate max-w-full text-center">
+                          {chat.title}
+                        </h1>
+                      )}
+                      {isAuthenticated && !compact && (
                         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                           <Button
                             variant="ghost"
@@ -300,9 +328,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               />
             )}
 
-            {isAuthenticated ? (
-              <UserMenu onOpenSettings={onOpenSettings} />
-            ) : (
+            {!isAuthenticated && (
               <Button
                 variant="primary"
                 size="sm"
@@ -313,6 +339,17 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                 <span className="hidden sm:inline">Sign In</span>
                 <span className="sm:hidden">Sign In</span>
               </Button>
+            )}
+
+            {showCloseButton && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={XIcon}
+                onClick={handleClose}
+                className="p-2 flex-shrink-0"
+                title="Close this chat"
+              />
             )}
           </div>
         </div>

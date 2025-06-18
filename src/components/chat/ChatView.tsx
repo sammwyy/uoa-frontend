@@ -31,9 +31,21 @@ import { FileAttachment } from "./FileAttachmentList";
 
 export interface ChatViewProps {
   chatId: string;
+  compact?: boolean;
+  hideSidebarToggle?: boolean;
+  showCloseButton?: boolean;
+  onClick?: () => void;
+  isFocus?: boolean;
 }
 
-export function ChatView({ chatId }: ChatViewProps) {
+export function ChatView({
+  chatId,
+  compact,
+  hideSidebarToggle,
+  showCloseButton,
+  isFocus,
+  onClick,
+}: ChatViewProps) {
   const { updateChat, sendMessage } = useChats();
   const { models } = useModels();
   const { isAuthenticated, session } = useAuth();
@@ -51,6 +63,7 @@ export function ChatView({ chatId }: ChatViewProps) {
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [messagesLoading, setMessagesLoading] = useState(false);
+  const isFocused = isFocus === undefined ? true : isFocus;
 
   const [currentStreamMessage, setCurrentStreamMessage] =
     useState<Message | null>(null);
@@ -110,6 +123,8 @@ export function ChatView({ chatId }: ChatViewProps) {
 
   // Register socket listeners
   useEffect(() => {
+    if (!isFocused) return;
+
     socketManager.setListeners({
       "message:start": () => {
         const dummy = createDummyMessage({
@@ -182,7 +197,7 @@ export function ChatView({ chatId }: ChatViewProps) {
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isFocused]);
 
   useEffect(() => {
     const branchId = selectedBranch;
@@ -462,7 +477,10 @@ export function ChatView({ chatId }: ChatViewProps) {
   return (
     <div
       ref={scrollContainerRef}
-      className="w-full flex flex-col h-[100vh] sm:h-[95vh] bg-chat-container backdrop-blur-md rounded-none sm:rounded-3xl shadow-glass dark:shadow-glass-dark border-0 sm:border border-white/20 dark:border-gray-700/30 relative overflow-y-auto"
+      className={`w-full flex flex-col h-[100vh] sm:h-[95vh] ${
+        isFocused ? "bg-chat-container" : "bg-chat-container/50"
+      } backdrop-blur-md rounded-none sm:rounded-3xl shadow-glass dark:shadow-glass-dark border-0 sm:border border-white/20 dark:border-gray-700/30 relative overflow-y-auto`}
+      onClick={onClick}
     >
       {/* Top */}
       <div className="sticky top-0 z-20 bg-chat-container/95 backdrop-blur-md">
@@ -478,6 +496,9 @@ export function ChatView({ chatId }: ChatViewProps) {
           updateChat={updateChat}
           modelConfig={modelConfig}
           onChangeModelConfig={onChangeModelConfig}
+          compact={compact}
+          hideSidebarToggle={hideSidebarToggle}
+          showCloseButton={showCloseButton}
         />
       </div>
 
