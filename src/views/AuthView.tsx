@@ -3,7 +3,6 @@ import {
   AlertCircle,
   ArrowRight,
   Bot,
-  CheckCircle,
   Mail,
   Moon,
   Sun,
@@ -246,28 +245,6 @@ export const AuthView: React.FC = () => {
                     <p className="text-sm text-amber-700 dark:text-amber-300">
                       You need an internet connection to sign in or register.
                     </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Demo credentials info */}
-            {mode === "login" && isOnline && (
-              <div className="mb-6 p-4 bg-blue-50/80 dark:bg-blue-900/20 rounded-xl border border-blue-200/50 dark:border-blue-700/50">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-1">
-                      Demo Credentials
-                    </h4>
-                    <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
-                      <p>
-                        <strong>Email:</strong> demo@example.com
-                      </p>
-                      <p>
-                        <strong>Password:</strong> password123
-                      </p>
-                    </div>
                   </div>
                 </div>
               </div>
