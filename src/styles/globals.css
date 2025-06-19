@@ -316,9 +316,9 @@ body,
   /* Chat container - STRONGER color (previous background) */
   --chat-container: linear-gradient(
     135deg,
-    rgb(252, 231, 243),
-    rgb(250, 209, 232),
-    rgb(253, 242, 248)
+    rgb(253, 220, 238),
+    #f0ebef,
+    rgb(253, 220, 238)
   );
 
   /* Theme-specific background variations */

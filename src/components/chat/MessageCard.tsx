@@ -69,7 +69,7 @@ export const MessageCard: React.FC<MessageCardProps> = ({
             ${
               message.role === "user"
                 ? "bg-primary-500 to-secondary-600 dark:bg-primary-200 dark:to-secondary-300 text-white ml-auto shadow-lg"
-                : "bg-primary-200/80 to-secondary-300/80 dark:bg-primary-500/80 dark:to-secondary-600/80 border border-gray-200/30 dark:border-gray-700/30 text-gray-800 dark:text-gray-200"
+                : "bg-white/70 to-secondary-300/80 dark:bg-primary-500/80 dark:to-secondary-600/80 border border-gray-200/30 dark:border-gray-700/30 text-gray-800 dark:text-gray-200"
             }
             ${isPending ? "opacity-75" : ""}
           `}
