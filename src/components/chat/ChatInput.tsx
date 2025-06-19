@@ -60,7 +60,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   // Initialize file upload client
   useEffect(() => {
     fileUploadClient.current = new FileUploadClient({
-      baseUrl: import.meta.env.VITE_UPLOAD_API || "http://localhost:3000",
+      baseUrl: import.meta.env.VITE_WORKER_ENDPOINT || "http://localhost:3000",
       token: () => {
         const tokens = LocalStorage.getAuthTokens();
         return tokens.accessToken || "";

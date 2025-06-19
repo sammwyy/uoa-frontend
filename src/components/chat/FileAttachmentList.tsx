@@ -67,7 +67,7 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
     }
 
     return (
-      attachment.file?.name || attachment.upload?.originalName || "Unknown file"
+      attachment.file?.name || attachment.upload?.filename || "Unknown file"
     );
   };
 
@@ -116,12 +116,12 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
   const handleDownload = (attachment: FileAttachment) => {
     if (!canDownload(attachment)) return;
 
-    const downloadUrl = `${import.meta.env.VITE_UPLOAD_API}/files/download/${
+    const downloadUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${
       attachment.upload!._id
     }`;
     const link = document.createElement("a");
     link.href = downloadUrl;
-    link.download = attachment.upload!.originalName;
+    link.download = attachment.upload!.filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

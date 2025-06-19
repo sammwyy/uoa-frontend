@@ -21,12 +21,12 @@ export const FileViewModal: React.FC<FileViewModalProps> = ({
   const handleDownload = () => {
     if (attachment.type === "file" && attachment.upload?._id) {
       // Download uploaded file
-      const downloadUrl = `${import.meta.env.VITE_UPLOAD_API}/files/download/${
-        attachment.upload._id
-      }`;
+      const downloadUrl = `${
+        import.meta.env.VITE_WORKER_ENDPOINT
+      }/files/download/${attachment.upload._id}`;
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = attachment.upload.originalName;
+      link.download = attachment.upload.filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -69,7 +69,7 @@ export const FileViewModal: React.FC<FileViewModalProps> = ({
     if (attachment.type === "drawing") return attachment.name || "Drawing";
     if (attachment.type === "audio")
       return attachment.name || "Audio Recording";
-    return attachment.upload?.originalName || "File";
+    return attachment.upload?.filename || "File";
   };
 
   const renderContent = () => {
@@ -104,14 +104,14 @@ export const FileViewModal: React.FC<FileViewModalProps> = ({
       const mimeType = attachment.upload.mimetype;
 
       if (mimeType.startsWith("image/")) {
-        const imageUrl = `${import.meta.env.VITE_UPLOAD_API}/files/serve/${
+        const imageUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${
           attachment.upload._id
         }`;
         return (
           <div className="text-center">
             <img
               src={imageUrl}
-              alt={attachment.upload.originalName}
+              alt={attachment.upload.filename}
               className="max-w-full max-h-96 mx-auto rounded-lg border border-gray-200 dark:border-gray-700"
             />
           </div>
@@ -126,7 +126,7 @@ export const FileViewModal: React.FC<FileViewModalProps> = ({
           </div>
           <div className="space-y-2">
             <p className="font-medium text-gray-800 dark:text-gray-200">
-              {attachment.upload.originalName}
+              {attachment.upload.filename}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               {attachment.upload.mimetype}

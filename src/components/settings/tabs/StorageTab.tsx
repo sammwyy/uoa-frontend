@@ -33,7 +33,7 @@ const formatBytes = (bytes: number): string => {
 
 const getFileIcon = (mimetype: string, size: "sm" | "lg" = "sm") => {
   const iconSize = size === "lg" ? "w-8 h-8" : "w-5 h-5";
-  
+
   if (mimetype.startsWith("image/")) {
     return <Image className={`${iconSize} text-blue-500`} />;
   }
@@ -47,26 +47,32 @@ const getFileIcon = (mimetype: string, size: "sm" | "lg" = "sm") => {
 };
 
 const getFileTypeColor = (mimetype: string) => {
-  if (mimetype.startsWith("image/")) return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
-  if (mimetype.startsWith("video/")) return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
-  if (mimetype.startsWith("audio/")) return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-  if (mimetype.includes("pdf")) return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+  if (mimetype.startsWith("image/"))
+    return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+  if (mimetype.startsWith("video/"))
+    return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
+  if (mimetype.startsWith("audio/"))
+    return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+  if (mimetype.includes("pdf"))
+    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
   return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
 };
 
 const getFilePreview = (file: FileUpload) => {
   if (file.mimetype.startsWith("image/")) {
-    const imageUrl = `${import.meta.env.VITE_UPLOAD_API}/files/serve/${file._id}`;
+    const imageUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${
+      file._id
+    }`;
     return (
       <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
         <img
           src={imageUrl}
-          alt={file.originalName}
+          alt={file.filename}
           className="w-full h-full object-cover"
           onError={(e) => {
             // Fallback to icon if image fails to load
-            e.currentTarget.style.display = 'none';
-            e.currentTarget.nextElementSibling?.classList.remove('hidden');
+            e.currentTarget.style.display = "none";
+            e.currentTarget.nextElementSibling?.classList.remove("hidden");
           }}
         />
         <div className="hidden w-full h-full flex items-center justify-center">
@@ -111,11 +117,16 @@ export function StorageTab() {
   // Mutations
   const [deleteFileMutation] = useMutation(DELETE_FILE_MUTATION);
 
-  const storageStats: UserStorageStats | null = storageData?.getUserStorageStats || null;
+  const storageStats: UserStorageStats | null =
+    storageData?.getUserStorageStats || null;
   const files: FileUpload[] = filesData?.getUserFiles || [];
 
   const handleDeleteFile = async (fileId: string) => {
-    if (!window.confirm("Are you sure you want to delete this file? This action cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this file? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
@@ -141,15 +152,17 @@ export function StorageTab() {
   };
 
   const handleViewFile = (file: FileUpload) => {
-    const fileUrl = `${import.meta.env.VITE_UPLOAD_API}/files/serve/${file._id}`;
+    const fileUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${file._id}`;
     window.open(fileUrl, "_blank");
   };
 
   const handleDownloadFile = (file: FileUpload) => {
-    const downloadUrl = `${import.meta.env.VITE_UPLOAD_API}/files/serve/${file._id}`;
+    const downloadUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${
+      file._id
+    }`;
     const link = document.createElement("a");
     link.href = downloadUrl;
-    link.download = file.originalName;
+    link.download = file.filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -209,7 +222,8 @@ export function StorageTab() {
                   File Storage
                 </h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {formatBytes(storageStats.used)} of {formatBytes(storageStats.limit)} used
+                  {formatBytes(storageStats.used)} of{" "}
+                  {formatBytes(storageStats.limit)} used
                 </p>
               </div>
               <div className="text-right">
@@ -240,8 +254,9 @@ export function StorageTab() {
             {getUsagePercentage() >= 90 && (
               <div className="p-3 bg-red-50/80 dark:bg-red-900/20 rounded-lg border border-red-200/50 dark:border-red-700/50">
                 <p className="text-red-800 dark:text-red-200 text-sm">
-                  <strong>Storage Almost Full:</strong> You're using {getUsagePercentage()}% of your storage. 
-                  Consider deleting some files to free up space.
+                  <strong>Storage Almost Full:</strong> You're using{" "}
+                  {getUsagePercentage()}% of your storage. Consider deleting
+                  some files to free up space.
                 </p>
               </div>
             )}
@@ -273,7 +288,8 @@ export function StorageTab() {
               File Management
             </h4>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              View, download, and delete your uploaded files to manage storage space.
+              View, download, and delete your uploaded files to manage storage
+              space.
             </p>
             <Button
               variant="primary"
@@ -299,10 +315,13 @@ export function StorageTab() {
             <div className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-gray-800/50 rounded-lg">
               <div>
                 <h4 className="font-medium text-gray-800 dark:text-gray-200">
-                  {files.length} file{files.length !== 1 ? 's' : ''} uploaded
+                  {files.length} file{files.length !== 1 ? "s" : ""} uploaded
                 </h4>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Total size: {formatBytes(files.reduce((total, file) => total + file.size, 0))}
+                  Total size:{" "}
+                  {formatBytes(
+                    files.reduce((total, file) => total + file.size, 0)
+                  )}
                 </p>
               </div>
             </div>
@@ -351,15 +370,23 @@ export function StorageTab() {
             <div className="max-h-[60vh] overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
                 {files.map((file) => (
-                  <Card key={file._id} padding="none" className="group hover:shadow-lg transition-all duration-200">
+                  <Card
+                    key={file._id}
+                    padding="none"
+                    className="group hover:shadow-lg transition-all duration-200"
+                  >
                     <div className="relative">
                       {/* File Preview */}
                       {getFilePreview(file)}
-                      
+
                       {/* File Type Badge */}
                       <div className="absolute top-2 left-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getFileTypeColor(file.mimetype)}`}>
-                          {file.mimetype.split('/')[1].toUpperCase()}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getFileTypeColor(
+                            file.mimetype
+                          )}`}
+                        >
+                          {file.mimetype.split("/")[1].toUpperCase()}
                         </span>
                       </div>
 
@@ -397,25 +424,32 @@ export function StorageTab() {
                       {/* Loading overlay for deletion */}
                       {deletingFile === file._id && (
                         <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-                          <div className="text-white text-sm font-medium">Deleting...</div>
+                          <div className="text-white text-sm font-medium">
+                            Deleting...
+                          </div>
                         </div>
                       )}
                     </div>
 
                     {/* File Info */}
                     <div className="p-3 space-y-2">
-                      <h4 className="font-medium text-gray-800 dark:text-gray-200 truncate" title={file.originalName}>
-                        {file.originalName}
+                      <h4
+                        className="font-medium text-gray-800 dark:text-gray-200 truncate"
+                        title={file.filename}
+                      >
+                        {file.filename}
                       </h4>
-                      
+
                       <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
                         <span>{formatBytes(file.size)}</span>
-                        <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                        <span>
+                          {new Date(file.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
 
-                      {file.description && (
-                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate" title={file.description}>
-                          {file.description}
+                      {file.filename && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                          {file.filename}
                         </p>
                       )}
                     </div>

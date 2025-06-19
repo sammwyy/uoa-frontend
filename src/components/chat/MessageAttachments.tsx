@@ -65,7 +65,7 @@ const AttachmentPreview: React.FC<{
 }> = ({ file, size, onView, onDelete, canDelete }) => {
   const [imageError, setImageError] = useState(false);
   const isImage = file.mimetype.startsWith("image/");
-  const fileUrl = `${import.meta.env.VITE_UPLOAD_API}/files/serve/${file._id}`;
+  const fileUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${file._id}`;
 
   if (size === "small") {
     // Small horizontal layout for user messages
@@ -194,7 +194,7 @@ const AttachmentModal: React.FC<{
 }> = ({ file, isOpen, onClose, onDelete, canDelete }) => {
   if (!file) return null;
 
-  const fileUrl = `${import.meta.env.VITE_UPLOAD_API}/files/serve/${file._id}`;
+  const fileUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${file._id}`;
   const isImage = file.mimetype.startsWith("image/");
   const isVideo = file.mimetype.startsWith("video/");
   const isAudio = file.mimetype.startsWith("audio/");
