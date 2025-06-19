@@ -55,10 +55,10 @@ export function AddonsTab() {
 
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
             This feature has been removed from the MVP. To make it easier to
-            self-host (and because I don't have the resources to host my own
-            instance right now), functions that relied on microservices (such as
-            the Code Runner plugin) were removed. Others, such as Draw, were
-            integrated natively.
+            self-host (and because the public instance is using a limited free
+            tier) functions that relied on microservices (such as the Code
+            Runner plugin) were removed. Others, such as Draw, were integrated
+            natively.
           </p>
         </div>
       </div>
