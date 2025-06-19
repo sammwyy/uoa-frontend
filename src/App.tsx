@@ -13,11 +13,7 @@ import { useConnectionStore } from "./stores/connection-store";
 
 // Main app content that shows loading screens
 const AppContent: React.FC = () => {
-  const {
-    forceSyncWithServer,
-    isAuthenticated,
-    isLoading: authLoading,
-  } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, isInitialized } = useAuth();
   const { initializeConnectionMonitoring } = useConnectionStore();
 
   useEffect(() => {
@@ -33,10 +29,6 @@ const AppContent: React.FC = () => {
         } else {
           logger.warn("IndexedDB not available");
         }
-
-        // Initialize authentication state from localStorage
-        // This is now also called automatically in the store, but we call it here too for safety
-        forceSyncWithServer();
 
         // Initialize connection monitoring
         const cleanupConnection = initializeConnectionMonitoring();
@@ -73,7 +65,7 @@ const AppContent: React.FC = () => {
   }, [isAuthenticated]);
 
   // Show loading screen during auth operations
-  if (authLoading) {
+  if (authLoading || !isInitialized) {
     return (
       <LoadingScreen
         message="Authenticating..."
