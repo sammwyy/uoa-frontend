@@ -20,9 +20,9 @@ import { useModels } from "@/hooks/useModels";
 import { useTools } from "@/hooks/useTools";
 import { apolloClient } from "@/lib/apollo/apollo-client";
 import { UPDATE_BRANCH_MUTATION } from "@/lib/apollo/queries";
-import { Tools } from "@/lib/data/tools";
-import { ChatBranch, ModelConfig } from "@/lib/graphql";
+import { AddMessageDto, ChatBranch, ModelConfig } from "@/lib/graphql";
 import { logger } from "@/lib/logger";
+import { getToolsForModel } from "@/lib/utils/modelUtils";
 import { useSidebarStore } from "@/stores/sidebar-store";
 import { Card } from "../components/ui/Card";
 
@@ -31,7 +31,7 @@ export const WelcomeView: React.FC = () => {
   const { user, isAuthenticated, session } = useAuth();
   const { toggle: toggleSidebar } = useSidebarStore();
   const { createChat } = useChats();
-  const { toggleTool, toolStates } = useTools(Tools);
+
   const [attachments, setAttachments] = useState<FileAttachment[]>([]);
   const [configModalOpen, setConfigModalOpen] = useState(false);
 
@@ -47,6 +47,10 @@ export const WelcomeView: React.FC = () => {
 
   const selectedModel = models.find(
     (model) => model.id === modelConfig?.modelId
+  );
+
+  const { toggleTool, toolStates, toolStateMap } = useTools(
+    getToolsForModel(selectedModel)
   );
 
   // Validation for chat input
@@ -126,17 +130,20 @@ export const WelcomeView: React.FC = () => {
       // ToDo: Move this to a global context/hook.
 
       if (newChat && newChat.defaultBranch) {
-        localStorage.setItem(
-          "uoa:tempPendingMessage",
-          JSON.stringify({
-            branchId: newChat.defaultBranch._id,
-            prompt: message,
-            modelId: selectedModel?.id,
-            apiKeyId: modelConfig?.apiKeyId,
-            rawDecryptKey: session?.decryptKey,
-            attachments: attachments.map((a) => a.upload?._id),
-          })
-        );
+        const dto: AddMessageDto = {
+          branchId: newChat.defaultBranch._id,
+          prompt: message,
+          modelId: selectedModel?.id,
+          apiKeyId: modelConfig?.apiKeyId,
+          rawDecryptKey: session?.decryptKey,
+          attachments: attachments.map((a) => a.upload?._id || ""),
+        };
+
+        if (toolStateMap["image-generation"]) {
+          dto.useImageTool = true;
+        }
+
+        localStorage.setItem("uoa:tempPendingMessage", JSON.stringify(dto));
 
         // Navigate to the new chat
         navigate(`/c/${newChat._id}`);
