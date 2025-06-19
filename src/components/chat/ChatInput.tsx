@@ -153,7 +153,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       //  Convert base64 data to file.
       const response = await fetch(newAttachment.data!);
       const blob = await response.blob();
-      file = new File([blob], "upload.png", { type: blob.type });
+      file = new File([blob], "upload", { type: blob.type });
     }
 
     setAttachments((prev) => [...prev, newAttachment]);

@@ -549,6 +549,18 @@ export const GET_USER_FILES_QUERY = gql`
   }
 `;
 
+export const GET_FILE_BY_ID_QUERY = gql`
+  query GetFileById($id: String!) {
+    getFileById(id: $id) {
+      _id
+      filename
+      mimetype
+      size
+      createdAt
+    }
+  }
+`;
+
 export const GET_USER_STORAGE_STATS_QUERY = gql`
   query GetUserStorageStats {
     getUserStorageStats {

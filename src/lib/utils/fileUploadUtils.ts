@@ -72,9 +72,9 @@ export class FileUploadClient {
     if (allowedTypes && !allowedTypes.includes(file.type)) {
       return {
         valid: false,
-        error: `File type not allowed. Allowed types: ${allowedTypes.join(
-          ", "
-        )}`,
+        error: `File type not allowed (${
+          file.type
+        }). Allowed types: ${allowedTypes.join(", ")}`,
       };
     }
 

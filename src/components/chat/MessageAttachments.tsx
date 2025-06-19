@@ -8,8 +8,11 @@ import {
   Video,
   X,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
+import { apolloClient } from "@/lib/apollo/apollo-client";
+import { GET_FILE_BY_ID_QUERY } from "@/lib/apollo/queries";
+import { FileUpload } from "@/lib/graphql";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
 
@@ -18,14 +21,6 @@ interface MessageAttachmentsProps {
   role: "user" | "assistant";
   onDeleteAttachment?: (attachmentId: string) => void;
   canDelete?: boolean;
-}
-
-interface AttachmentFile {
-  _id: string;
-  originalName: string;
-  mimetype: string;
-  size: number;
-  createdAt: string;
 }
 
 const formatBytes = (bytes: number): string => {
@@ -57,7 +52,7 @@ const getFileIcon = (mimetype: string, size: "sm" | "md" | "lg" = "md") => {
 };
 
 const AttachmentPreview: React.FC<{
-  file: AttachmentFile;
+  file: FileUpload;
   size: "small" | "large";
   onView: () => void;
   onDelete?: () => void;
@@ -77,7 +72,7 @@ const AttachmentPreview: React.FC<{
             {isImage && !imageError ? (
               <img
                 src={fileUrl}
-                alt={file.originalName}
+                alt={file.filename}
                 className="w-full h-full object-cover"
                 onError={() => setImageError(true)}
               />
@@ -92,9 +87,9 @@ const AttachmentPreview: React.FC<{
           <div className="flex-1 min-w-0">
             <p
               className="text-xs font-medium text-white truncate"
-              title={file.originalName}
+              title={file.filename}
             >
-              {file.originalName}
+              {file.filename}
             </p>
             <p className="text-xs text-white/70">{formatBytes(file.size)}</p>
           </div>
@@ -133,7 +128,7 @@ const AttachmentPreview: React.FC<{
         {isImage && !imageError ? (
           <img
             src={fileUrl}
-            alt={file.originalName}
+            alt={file.filename}
             className="w-full h-full object-cover"
             onError={() => setImageError(true)}
           />
@@ -172,9 +167,9 @@ const AttachmentPreview: React.FC<{
       <div className="p-3">
         <h4
           className="font-medium text-gray-800 dark:text-gray-200 truncate mb-1"
-          title={file.originalName}
+          title={file.filename}
         >
-          {file.originalName}
+          {file.filename}
         </h4>
         <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
           <span>{formatBytes(file.size)}</span>
@@ -186,7 +181,7 @@ const AttachmentPreview: React.FC<{
 };
 
 const AttachmentModal: React.FC<{
-  file: AttachmentFile | null;
+  file: FileUpload | null;
   isOpen: boolean;
   onClose: () => void;
   onDelete?: () => void;
@@ -202,7 +197,7 @@ const AttachmentModal: React.FC<{
   const handleDownload = () => {
     const link = document.createElement("a");
     link.href = fileUrl;
-    link.download = file.originalName;
+    link.download = file.filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -226,7 +221,7 @@ const AttachmentModal: React.FC<{
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                {file.originalName}
+                {file.filename}
               </h3>
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {file.mimetype} • {formatBytes(file.size)}
@@ -248,7 +243,7 @@ const AttachmentModal: React.FC<{
             <div className="text-center">
               <img
                 src={fileUrl}
-                alt={file.originalName}
+                alt={file.filename}
                 className="max-w-full max-h-96 mx-auto rounded-lg border border-gray-200 dark:border-gray-700"
               />
             </div>
@@ -324,25 +319,50 @@ export const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
   onDeleteAttachment,
   canDelete = false,
 }) => {
-  const [selectedFile, setSelectedFile] = useState<AttachmentFile | null>(null);
+  const [selectedFile, setSelectedFile] = useState<FileUpload | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [files, setFiles] = useState<AttachmentFile[]>([]);
+  const [files, setFiles] = useState<FileUpload[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Mock function to fetch file details - replace with actual API call
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchFileDetails = async () => {
       setLoading(true);
       try {
-        // TODO: Replace with actual API call to get file details
-        const mockFiles: AttachmentFile[] = attachments.map((id, index) => ({
-          _id: id,
-          originalName: `attachment-${index + 1}.jpg`,
-          mimetype: "image/jpeg",
-          size: 1024 * 1024, // 1MB
-          createdAt: new Date().toISOString(),
-        }));
-        setFiles(mockFiles);
+        const attachmentsFiles: FileUpload[] = [];
+
+        for (const attachmentId of attachments) {
+          const { data, error: queryError } = await apolloClient.query({
+            query: GET_FILE_BY_ID_QUERY,
+            variables: { id: attachmentId },
+            fetchPolicy: "cache-first",
+          });
+
+          let fileUpload: FileUpload | null = null;
+
+          if (queryError || !data?.getFileById) {
+            console.error("Failed to fetch file details:", queryError);
+            fileUpload = {
+              _id: attachmentId,
+              filename: "Unknown File",
+              mimetype: "application/octet-stream",
+              size: 0,
+              createdAt: new Date().toISOString(),
+            };
+          } else {
+            fileUpload = {
+              _id: data.getFileById._id,
+              filename: data.getFileById.filename,
+              mimetype: data.getFileById.mimetype,
+              size: data.getFileById.size,
+              createdAt: data.getFileById.createdAt,
+            };
+          }
+
+          attachmentsFiles.push(fileUpload);
+        }
+
+        setFiles(attachmentsFiles);
       } catch (error) {
         console.error("Failed to fetch file details:", error);
       } finally {
@@ -357,7 +377,7 @@ export const MessageAttachments: React.FC<MessageAttachmentsProps> = ({
     }
   }, [attachments]);
 
-  const handleViewFile = (file: AttachmentFile) => {
+  const handleViewFile = (file: FileUpload) => {
     setSelectedFile(file);
     setModalOpen(true);
   };
