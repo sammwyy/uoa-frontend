@@ -116,13 +116,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
-  // Handle paste events for files
+  // Handle paste events for files and long text
   useEffect(() => {
     const handlePaste = (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
       if (!items) return;
 
       const files: File[] = [];
+
+      // Check for files first
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         if (item.kind === "file") {
@@ -133,9 +135,40 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         }
       }
 
+      // If we have files, handle them normally
       if (files.length > 0) {
         e.preventDefault();
         handleFilesAdded(files);
+        return;
+      }
+
+      // Check text content length (you can adjust this threshold)
+      const TEXT_LENGTH_THRESHOLD = 512; // characters
+
+      // Handle long text as file
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === "string" && item.type === "text/plain") {
+          item.getAsString((text) => {
+            if (text.length > TEXT_LENGTH_THRESHOLD) {
+              // Create a fake file with the text content
+              const blob = new Blob([text], { type: "text/plain" });
+              const fakeFile = new File([blob], "pasted-text.txt", {
+                type: "text/plain",
+                lastModified: Date.now(),
+              });
+
+              // Send as file
+              handleFilesAdded([fakeFile]);
+            }
+            // If text is short, let it paste normally
+          });
+
+          // We need to prevent default here to avoid the paste happening
+          // before we can check the text length
+          e.preventDefault();
+          break; // Only handle the first text item
+        }
       }
     };
 
