@@ -6,6 +6,7 @@ interface TextareaProps
   autoResize?: boolean;
   error?: boolean;
   className?: string;
+  ref?: React.RefObject<HTMLTextAreaElement>;
 }
 
 export const Textarea: React.FC<TextareaProps> = ({
@@ -15,9 +16,11 @@ export const Textarea: React.FC<TextareaProps> = ({
   className = "",
   value,
   onChange,
+  ref,
   ...props
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const callbackRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = ref || callbackRef;
 
   const adjustHeight = () => {
     if (autoResize && textareaRef.current) {
