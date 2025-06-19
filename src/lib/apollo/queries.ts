@@ -510,18 +510,41 @@ export const REVOKE_ALL_SESSIONS_MUTATION = gql`
   }
 `;
 
-// File uploads
+// Storage
+export const CREATE_FILE_MUTATION = gql`
+  mutation CreateFile($payload: CreateFileDto!) {
+    createFile(payload: $payload) {
+      _id
+      filename
+      mimetype
+      size
+      uploadId
+      clientToken
+      createdAt
+    }
+  }
+`;
+
+export const COMPLETE_FILE_MUTATION = gql`
+  mutation CompleteFile($payload: CompleteFileDto!) {
+    completeFile(payload: $payload) {
+      _id
+      filename
+      mimetype
+      size
+      createdAt
+    }
+  }
+`;
+
 export const GET_USER_FILES_QUERY = gql`
   query GetUserFiles {
     getUserFiles {
       _id
       filename
-      originalName
       mimetype
       size
-      description
       createdAt
-      updatedAt
     }
   }
 `;

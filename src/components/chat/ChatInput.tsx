@@ -179,7 +179,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             ? {
                 ...att,
                 status: "completed" as const,
-                upload: uploadResponse.file,
+                upload: uploadResponse,
                 progress: 100,
               }
             : att

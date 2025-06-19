@@ -83,11 +83,6 @@ export interface StorageConfig {
 }
 
 // File upload
-export interface UploadResponse {
-  message: string;
-  file: FileUpload;
-}
-
 export interface UploadError {
   message: string;
   statusCode: number;
@@ -104,7 +99,7 @@ export interface UploadOptions {
   baseUrl?: string;
   token?: string | (() => string);
   onProgress?: (progress: UploadProgress) => void;
-  onSuccess?: (response: UploadResponse) => void;
+  onSuccess?: (response: FileUpload) => void;
   onError?: (error: UploadError) => void;
   onStart?: () => void;
   onComplete?: () => void;

@@ -170,12 +170,11 @@ export interface User {
 export interface FileUpload {
   _id: string;
   filename: string;
-  originalName: string;
   mimetype: string;
   size: number;
-  description?: string;
+  uploadId?: string;
+  clientToken?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface UserStorageStats {

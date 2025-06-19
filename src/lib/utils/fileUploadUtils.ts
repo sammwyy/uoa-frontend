@@ -1,24 +1,38 @@
+import { UploadError, UploadOptions, UploadProgress } from "@/types";
+import { apolloClient } from "../apollo/apollo-client";
 import {
-  UploadError,
-  UploadOptions,
-  UploadProgress,
-  UploadResponse,
-} from "@/types";
+  COMPLETE_FILE_MUTATION,
+  CREATE_FILE_MUTATION,
+} from "../apollo/queries";
+import { FileUpload } from "../graphql";
+
+interface FilePart {
+  etag: string;
+  partNumber: number;
+}
+
+interface FileResponse {
+  _id: string;
+  filename: string;
+  mimetype: string;
+  size: number;
+  uploadId?: string;
+  clientToken?: string;
+  createdAt: string;
+}
 
 export class FileUploadClient {
-  private baseUrl: string;
-  private token: string | (() => string) | undefined;
+  private workerEndpoint: string;
   private abortController: AbortController | undefined;
   private defaultOptions: UploadOptions;
+  private readonly chunkSize = 5 * 1024 * 1024; // 5MB
 
   constructor(options: Partial<UploadOptions> = {}) {
-    this.baseUrl = options.baseUrl || "http://localhost:3000";
-    this.token = options.token || undefined;
+    this.workerEndpoint =
+      import.meta.env.VITE_WORKER_ENDPOINT || "http://localhost:8787";
 
     this.defaultOptions = {
-      baseUrl: this.baseUrl,
-      token: this.token,
-      maxFileSize: 10 * 1024 * 1024, // 10MB
+      maxFileSize: 100 * 1024 * 1024, // 100MB
       allowedTypes: [
         "image/jpeg",
         "image/png",
@@ -28,28 +42,14 @@ export class FileUploadClient {
         "text/plain",
         "application/msword",
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "video/mp4",
+        "video/mpeg",
+        "audio/mpeg",
+        "audio/wav",
       ],
-      timeout: 30000, // 30 seconds
+      timeout: 300000, // 5 minutes for large files
       ...options,
     };
-  }
-
-  /**
-   * Set authentication token
-   */
-  setToken(token: string): void {
-    this.token = token;
-    this.defaultOptions.token = token;
-  }
-
-  /**
-   * Get current token
-   */
-  getToken(): string | null {
-    if (typeof this.token === "function") {
-      return this.token();
-    }
-    return this.token || null;
   }
 
   /**
@@ -58,7 +58,10 @@ export class FileUploadClient {
   validateFile(file: File): { valid: boolean; error?: string } {
     const { maxFileSize, allowedTypes } = this.defaultOptions;
 
-    // Check file size
+    if (file.size === 0) {
+      return { valid: false, error: "File is empty" };
+    }
+
     if (maxFileSize && file.size > maxFileSize) {
       return {
         valid: false,
@@ -66,7 +69,6 @@ export class FileUploadClient {
       };
     }
 
-    // Check file type
     if (allowedTypes && !allowedTypes.includes(file.type)) {
       return {
         valid: false,
@@ -76,26 +78,151 @@ export class FileUploadClient {
       };
     }
 
-    // Check if file is not empty
-    if (file.size === 0) {
-      return {
-        valid: false,
-        error: "File is empty",
-      };
-    }
-
     return { valid: true };
   }
 
   /**
-   * Upload single file
+   * Create file record in database
+   */
+  private async createFileRecord(file: File): Promise<FileResponse> {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: CREATE_FILE_MUTATION,
+        variables: {
+          payload: {
+            filename: file.name,
+            mimetype: file.type,
+            size: file.size,
+          },
+        },
+      });
+
+      return data.createFile;
+    } catch (error) {
+      throw new Error(
+        `Failed to create file record: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  /**
+   * Upload file chunks to worker
+   */
+  private async uploadFileChunks(
+    file: File,
+    fileRecord: FileResponse,
+    onProgress?: (progress: UploadProgress) => void
+  ): Promise<FilePart[]> {
+    const { uploadId, clientToken } = fileRecord;
+    if (!uploadId || !clientToken) {
+      throw new Error("Missing upload credentials");
+    }
+
+    const totalParts = Math.ceil(file.size / this.chunkSize);
+    const parts: FilePart[] = [];
+    let uploadedBytes = 0;
+
+    this.abortController = new AbortController();
+
+    for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
+      const start = (partNumber - 1) * this.chunkSize;
+      const end = Math.min(start + this.chunkSize, file.size);
+      const chunk = file.slice(start, end);
+      const isLastPart = partNumber === totalParts;
+
+      try {
+        const url = `${this.workerEndpoint}/upload/part/${partNumber}${
+          isLastPart ? "?isLast=true" : ""
+        }`;
+
+        const response = await fetch(url, {
+          method: "put",
+          headers: {
+            Authorization: `Bearer ${clientToken}`,
+            "Content-Type": "application/octet-stream",
+          },
+          body: chunk,
+          signal: this.abortController.signal,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Failed to upload part ${partNumber}`
+          );
+        }
+
+        const partData = await response.json();
+        if (!partData.success) {
+          throw new Error(partData.error || `Part ${partNumber} upload failed`);
+        }
+
+        parts.push({
+          partNumber: partData.partNumber,
+          etag: partData.etag,
+        });
+
+        uploadedBytes += chunk.size;
+
+        // Report progress
+        if (onProgress) {
+          const progress: UploadProgress = {
+            loaded: uploadedBytes,
+            total: file.size,
+            percentage: Math.round((uploadedBytes / file.size) * 100),
+          };
+          onProgress(progress);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          throw new Error("Upload cancelled");
+        }
+        throw error;
+      }
+    }
+
+    return parts;
+  }
+
+  /**
+   * Complete file upload
+   */
+  private async completeFileUpload(
+    fileId: string,
+    parts: FilePart[]
+  ): Promise<FileResponse> {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: COMPLETE_FILE_MUTATION,
+        variables: {
+          payload: {
+            fileId,
+            parts,
+          },
+        },
+      });
+
+      return data.completeFile;
+    } catch (error) {
+      throw new Error(
+        `Failed to complete upload: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
+  }
+
+  /**
+   * Upload single file with new multipart flow
    */
   async upload(
     file: File,
     options: Partial<UploadOptions> = {}
-  ): Promise<UploadResponse> {
+  ): Promise<FileUpload> {
     const mergedOptions = { ...this.defaultOptions, ...options };
-    const { onProgress, onSuccess, onError, onStart, onComplete, timeout } =
+    const { onProgress, onSuccess, onError, onStart, onComplete } =
       mergedOptions;
 
     // Validate file
@@ -109,62 +236,29 @@ export class FileUploadClient {
       throw new Error(validation.error);
     }
 
-    // Create abort controller for cancellation
-    this.abortController = new AbortController();
-
-    // Prepare form data
-    const formData = new FormData();
-    formData.append("file", file);
-
-    // Prepare headers
-    const headers: Record<string, string> = {};
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.getToken()}`;
-    }
-
     onStart?.();
 
     try {
-      const response = await this.uploadWithProgress(
-        `${this.baseUrl}/files/upload`,
-        formData,
-        headers,
-        onProgress,
-        timeout
+      // Step 1: Create file record
+      const fileRecord = await this.createFileRecord(file);
+
+      // Step 2: Upload file chunks
+      const parts = await this.uploadFileChunks(file, fileRecord, onProgress);
+
+      // Step 3: Complete upload
+      const completedFile = await this.completeFileUpload(
+        fileRecord._id,
+        parts
       );
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const error: UploadError = {
-          message: errorData.message || "Upload failed",
-          statusCode: response.status,
-          error: errorData.error,
-        };
-        onError?.(error);
-        throw new Error(error.message);
-      }
-
-      const result: { file: UploadResponse } = await response.json();
-      onSuccess?.(result.file);
-      return result.file;
+      onSuccess?.(completedFile);
+      return completedFile;
     } catch (error) {
-      if (error instanceof Error) {
-        if (error.name === "AbortError") {
-          const abortError: UploadError = {
-            message: "Upload cancelled",
-            statusCode: 0,
-          };
-          onError?.(abortError);
-          throw new Error("Upload cancelled");
-        }
-
-        const uploadError: UploadError = {
-          message: error.message,
-          statusCode: 0,
-        };
-        onError?.(uploadError);
-        throw error;
-      }
+      const uploadError: UploadError = {
+        message: error instanceof Error ? error.message : "Unknown error",
+        statusCode: 0,
+      };
+      onError?.(uploadError);
       throw error;
     } finally {
       onComplete?.();
@@ -178,8 +272,8 @@ export class FileUploadClient {
   async uploadMultiple(
     files: File[],
     options: Partial<UploadOptions> = {}
-  ): Promise<UploadResponse[]> {
-    const results: UploadResponse[] = [];
+  ): Promise<FileUpload[]> {
+    const results: FileUpload[] = [];
     const errors: Array<{ file: File; error: string }> = [];
 
     for (let i = 0; i < files.length; i++) {
@@ -224,90 +318,6 @@ export class FileUploadClient {
     if (this.abortController) {
       this.abortController.abort();
     }
-  }
-
-  /**
-   * Upload with progress tracking
-   */
-  private uploadWithProgress(
-    url: string,
-    formData: FormData,
-    headers: Record<string, string>,
-    onProgress?: (progress: UploadProgress) => void,
-    timeout?: number
-  ): Promise<Response> {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-
-      // Set timeout
-      if (timeout) {
-        xhr.timeout = timeout;
-      }
-
-      // Handle progress
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable && onProgress) {
-          const progress: UploadProgress = {
-            loaded: event.loaded,
-            total: event.total,
-            percentage: Math.round((event.loaded / event.total) * 100),
-          };
-          onProgress(progress);
-        }
-      });
-
-      // Handle completion
-      xhr.addEventListener("load", () => {
-        const response = new Response(xhr.response, {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          headers: new Headers(
-            xhr
-              .getAllResponseHeaders()
-              .split("\r\n")
-              .reduce((acc, line) => {
-                const [key, value] = line.split(": ");
-                if (key && value) {
-                  acc[key] = value;
-                }
-                return acc;
-              }, {} as Record<string, string>)
-          ),
-        });
-        resolve(response);
-      });
-
-      // Handle errors
-      xhr.addEventListener("error", () => {
-        reject(new Error("Network error"));
-      });
-
-      xhr.addEventListener("timeout", () => {
-        reject(new Error("Upload timeout"));
-      });
-
-      xhr.addEventListener("abort", () => {
-        reject(new Error("Upload cancelled"));
-      });
-
-      // Handle abort controller
-      if (this.abortController) {
-        this.abortController.signal.addEventListener("abort", () => {
-          xhr.abort();
-        });
-      }
-
-      // Set up request
-      xhr.open("POST", url);
-
-      // Set headers
-      Object.entries(headers).forEach(([key, value]) => {
-        xhr.setRequestHeader(key, value);
-      });
-
-      // Send request
-      xhr.send(formData);
-    });
   }
 }
 
