@@ -60,9 +60,7 @@ const getFileTypeColor = (mimetype: string) => {
 
 const getFilePreview = (file: FileUpload) => {
   if (file.mimetype.startsWith("image/")) {
-    const imageUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${
-      file._id
-    }`;
+    const imageUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/file/${file._id}`;
     return (
       <div className="w-full h-32 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
         <img
@@ -152,12 +150,12 @@ export function StorageTab() {
   };
 
   const handleViewFile = (file: FileUpload) => {
-    const fileUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${file._id}`;
+    const fileUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/file/${file._id}`;
     window.open(fileUrl, "_blank");
   };
 
   const handleDownloadFile = (file: FileUpload) => {
-    const downloadUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${
+    const downloadUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/file/${
       file._id
     }`;
     const link = document.createElement("a");

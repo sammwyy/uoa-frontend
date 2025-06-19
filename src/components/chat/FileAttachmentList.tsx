@@ -116,7 +116,7 @@ export const FileAttachmentList: React.FC<FileAttachmentListProps> = ({
   const handleDownload = (attachment: FileAttachment) => {
     if (!canDownload(attachment)) return;
 
-    const downloadUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/files/${
+    const downloadUrl = `${import.meta.env.VITE_WORKER_ENDPOINT}/file/${
       attachment.upload!._id
     }`;
     const link = document.createElement("a");
